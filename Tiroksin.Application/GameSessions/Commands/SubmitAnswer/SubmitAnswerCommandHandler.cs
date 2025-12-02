@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Tiroksin.Domain.Entities;
 using Tiroksin.Domain.Enums;
 using Tiroksin.Infrastructure.Data;
@@ -10,11 +11,13 @@ public class SubmitAnswerCommandHandler : IRequestHandler<SubmitAnswerCommand, S
 {
     private readonly ApplicationDbContext _context;
     private readonly IMediator _mediator;
+    private readonly ILogger<SubmitAnswerCommandHandler> _logger;
 
-    public SubmitAnswerCommandHandler(ApplicationDbContext context, IMediator mediator)
+    public SubmitAnswerCommandHandler(ApplicationDbContext context, IMediator mediator, ILogger<SubmitAnswerCommandHandler> logger)
     {
         _context = context;
         _mediator = mediator;
+        _logger = logger;
     }
 
     public async Task<SubmitAnswerResponse> Handle(SubmitAnswerCommand request, CancellationToken cancellationToken)
@@ -39,8 +42,9 @@ public class SubmitAnswerCommandHandler : IRequestHandler<SubmitAnswerCommand, S
             return new SubmitAnswerResponse { Success = false, Message = "Bu soru aktif değil" };
         }
 
-        // 2. Get player
+        // 2. Get player with user info (avoids separate query for username)
         var player = await _context.GameSessionPlayers
+            .Include(p => p.User)
             .FirstOrDefaultAsync(p => p.GameSessionId == request.GameSessionId && p.UserId == request.UserId, cancellationToken);
 
         if (player == null)
@@ -112,9 +116,8 @@ public class SubmitAnswerCommandHandler : IRequestHandler<SubmitAnswerCommand, S
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        // 7. Get username for notifications
-        var user = await _context.Users.FindAsync(new object[] { request.UserId }, cancellationToken);
-        var username = user?.Username ?? "Unknown";
+        // 7. Get username for notifications (already loaded via Include)
+        var username = player.User?.Username ?? "Unknown";
 
         // 8. Publish PlayerEliminated if eliminated
         if (isEliminated)
@@ -149,14 +152,14 @@ public class SubmitAnswerCommandHandler : IRequestHandler<SubmitAnswerCommand, S
 
         bool allPlayersAnswered = answersForThisQuestion.Count >= activePlayersCount;
 
-        Console.WriteLine($"📊 Answer check: {answersForThisQuestion.Count}/{activePlayersCount} active players answered (total: {allPlayers.Count})");
+        _logger.LogDebug("Answer check: {Answered}/{ActivePlayers} active players answered (total: {TotalPlayers})", answersForThisQuestion.Count, activePlayersCount, allPlayers.Count);
 
         // 10. If all players answered, handle game progression
         if (allPlayersAnswered)
         {
             // Remaining players = those not eliminated
             var remainingPlayers = allPlayers.Count(p => !p.IsEliminated);
-            Console.WriteLine($"🎯 All answered! Remaining players: {remainingPlayers}");
+            _logger.LogDebug("All answered! Remaining players: {RemainingPlayers}", remainingPlayers);
 
             if (remainingPlayers <= 1)
             {
@@ -169,12 +172,12 @@ public class SubmitAnswerCommandHandler : IRequestHandler<SubmitAnswerCommand, S
                     var winner = allPlayers.First(p => !p.IsEliminated);
                     winner.IsWinner = true;
                     winner.Rank = 1;
-                    Console.WriteLine($"🏆 Winner: {winner.UserId}");
+                    _logger.LogInformation("Game winner determined: {WinnerId}", winner.UserId);
                 }
                 else
                 {
                     // Everyone eliminated - no winner
-                    Console.WriteLine($"💀 Everyone eliminated! No winner.");
+                    _logger.LogInformation("Game ended with no winner - all players eliminated");
                 }
 
                 await _context.SaveChangesAsync(cancellationToken);
@@ -188,7 +191,7 @@ public class SubmitAnswerCommandHandler : IRequestHandler<SubmitAnswerCommand, S
             else
             {
                 // Move to next question
-                Console.WriteLine($"⏭️ Moving to next question...");
+                _logger.LogDebug("Moving to next question for GameSession: {GameSessionId}", gameSession.Id);
                 await _mediator.Publish(new AllPlayersAnsweredNotification
                 {
                     GameSessionId = gameSession.Id,

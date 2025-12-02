@@ -1,5 +1,9 @@
 import * as signalR from '@microsoft/signalr'
 
+// Environment variable'dan API URL'ini al, yoksa default kullan
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const HUB_URL = `${API_URL}/gamehub`
+
 class SignalRService {
   constructor() {
     this.connection = null
@@ -26,7 +30,7 @@ class SignalRService {
     }
 
     this.connection = new signalR.HubConnectionBuilder()
-      .withUrl('http://localhost:5000/gamehub', {
+      .withUrl(HUB_URL, {
         accessTokenFactory: () => token,
         transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling
       })

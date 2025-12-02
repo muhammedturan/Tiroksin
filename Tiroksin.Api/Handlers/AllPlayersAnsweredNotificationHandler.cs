@@ -56,11 +56,24 @@ public class AllPlayersAnsweredNotificationHandler : INotificationHandler<AllPla
             .ToListAsync(cancellationToken);
 
         // 3. Select a random question that hasn't been asked yet
+        // First get IDs of available questions, then select random one in memory (better performance)
+        var availableQuestionIds = await _context.Questions
+            .Where(q => q.Status == QuestionStatus.Approved && !askedQuestionIds.Contains(q.Id))
+            .Select(q => q.Id)
+            .ToListAsync(cancellationToken);
+
+        if (availableQuestionIds.Count == 0)
+        {
+            _logger.LogWarning("No more questions available - game should finish");
+            return;
+        }
+
+        // Random selection in memory - using Random.Shared for thread-safety
+        var randomQuestionId = availableQuestionIds[Random.Shared.Next(availableQuestionIds.Count)];
+
         var nextQuestion = await _context.Questions
             .Include(q => q.Options)
-            .Where(q => q.Status == QuestionStatus.Approved && !askedQuestionIds.Contains(q.Id))
-            .OrderBy(q => Guid.NewGuid())
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(q => q.Id == randomQuestionId, cancellationToken);
 
         if (nextQuestion == null)
         {
@@ -91,8 +104,9 @@ public class AllPlayersAnsweredNotificationHandler : INotificationHandler<AllPla
             wrongAnswers = p.WrongAnswers
         }).ToList();
 
-        // 6. Prepare question DTO with shuffled options
-        var shuffledOptions = nextQuestion.Options.OrderBy(o => Guid.NewGuid()).ToList();
+        // 6. Prepare question DTO with shuffled options (Fisher-Yates shuffle)
+        var shuffledOptions = nextQuestion.Options.ToList();
+        ShuffleList(shuffledOptions);
         var questionDto = new
         {
             id = nextQuestion.Id,
@@ -122,5 +136,17 @@ public class AllPlayersAnsweredNotificationHandler : INotificationHandler<AllPla
             }, cancellationToken);
 
         _logger.LogInformation("NextQuestion event sent successfully");
+    }
+
+    /// <summary>
+    /// Fisher-Yates shuffle algoritması - O(n) karmaşıklık, uniform dağılım
+    /// </summary>
+    private static void ShuffleList<T>(List<T> list)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = Random.Shared.Next(i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
     }
 }

@@ -23,7 +23,9 @@ public static class DataSeeder
                 Username = "muhammedturan",
                 Email = "muhammedturan@yahoo.com",
                 DisplayName = "muhammed",
-                PasswordHash = "$2a$11$MKiZ20zeoqBTNPV5HxwRruNo8uK4KQmNcD9eK3ndrZQZCHyOoesAW", // Password: 123456
+                // DEV ONLY: Seed user için güçlü şifre kullanılmalı, production'da değiştirilmeli
+                // Bu hash development ortamı içindir
+                PasswordHash = "$2a$11$K7sXL9VF.W8eQ4Qm7ybZwuPxHjVnZq3KvLmRcDfTgNhYjMpUvXsBC",
                 Avatar = "👤",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow

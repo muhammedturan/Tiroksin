@@ -24,5 +24,16 @@ export const gameService = {
   async getGameSession(gameSessionId) {
     const response = await api.get(`/game/${gameSessionId}`)
     return response.data
+  },
+
+  // Finish the game and get final results
+  async finishGame(gameSessionId, roomId) {
+    console.log('🏁 Finishing game:', { gameSessionId, roomId })
+    const response = await api.post('/game/finish', {
+      gameSessionId,
+      roomId
+    })
+    console.log('✅ Game finished successfully:', response.data)
+    return response.data
   }
 }

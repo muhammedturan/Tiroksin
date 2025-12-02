@@ -35,7 +35,7 @@
           <div class="question-card">
             <!-- Question Text -->
             <div class="question-header">
-              <div class="question-text" v-html="question.text"></div>
+              <div class="question-text" v-html="getSafeQuestionText()"></div>
             </div>
 
             <!-- Question Image (if exists) -->
@@ -57,7 +57,7 @@
                 }"
               >
                 <span class="option-key">{{ option.optionKey }}</span>
-                <span class="option-text" v-html="option.text"></span>
+                <span class="option-text" v-html="getSafeOptionText(option.text)"></span>
               </button>
             </div>
           </div>
@@ -93,6 +93,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '../services/api'
+import { sanitizeHtml } from '../utils/sanitize'
 
 const route = useRoute()
 const question = ref(null)
@@ -146,6 +147,15 @@ function getOptionsLayoutClass(layout) {
     case 2: return 'options-horizontal'
     default: return 'options-vertical'
   }
+}
+
+// XSS koruması için HTML temizleme fonksiyonları
+function getSafeQuestionText() {
+  return sanitizeHtml(question.value?.text || '')
+}
+
+function getSafeOptionText(text) {
+  return sanitizeHtml(text || '')
 }
 </script>
 

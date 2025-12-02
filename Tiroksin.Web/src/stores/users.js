@@ -73,7 +73,10 @@ export const useUsersStore = defineStore('users', () => {
   }
 
   // Giriş yap (API)
-  const login = async (username, password = '123456') => {
+  const login = async (username, password) => {
+    if (!password) {
+      throw new Error('Şifre gereklidir')
+    }
     try {
       const response = await authService.login({
         username: username.toLowerCase(),

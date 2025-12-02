@@ -1,12 +1,25 @@
 using System.Text;
+using FluentValidation;
+using Tiroksin.Api.Middleware;
 using Tiroksin.Api.Services;
+using Tiroksin.Application.Common.Behaviors;
 using Tiroksin.Application.Common.Interfaces;
 using Tiroksin.Infrastructure.Data;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Validate required configuration
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    throw new InvalidOperationException(
+        "JWT Key is not configured. Set 'Jwt:Key' in appsettings.json, " +
+        "appsettings.{Environment}.json, or via environment variable 'Jwt__Key'.");
+}
 
 // Add services to the container.
 builder.Services.AddControllers()
@@ -55,12 +68,16 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
            .UseSnakeCaseNamingConvention());
 
-// MediatR
+// MediatR with validation pipeline
 builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(typeof(Tiroksin.Application.Auth.Commands.Login.LoginCommand).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(Program).Assembly); // Register handlers from API assembly
+    cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 });
+
+// FluentValidation - register all validators from Application assembly
+builder.Services.AddValidatorsFromAssembly(typeof(Tiroksin.Application.Auth.Commands.Login.LoginCommand).Assembly);
 
 // Services
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
@@ -77,7 +94,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
 
         // SignalR için JWT token'ı query string'den al
@@ -135,6 +152,10 @@ app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
 app.UseStaticFiles();
 app.UseCors();
+
+// Global exception handling
+app.UseGlobalExceptionHandler();
+
 app.UseAuthentication();
 app.UseAuthorization();
 

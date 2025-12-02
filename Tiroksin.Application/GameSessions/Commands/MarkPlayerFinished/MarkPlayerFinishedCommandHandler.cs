@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Tiroksin.Domain.Entities;
 using Tiroksin.Domain.Enums;
 using Tiroksin.Infrastructure.Data;
@@ -9,15 +10,17 @@ namespace Tiroksin.Application.GameSessions.Commands.MarkPlayerFinished;
 public class MarkPlayerFinishedCommandHandler : IRequestHandler<MarkPlayerFinishedCommand, MarkPlayerFinishedResponse>
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<MarkPlayerFinishedCommandHandler> _logger;
 
-    public MarkPlayerFinishedCommandHandler(ApplicationDbContext context)
+    public MarkPlayerFinishedCommandHandler(ApplicationDbContext context, ILogger<MarkPlayerFinishedCommandHandler> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task<MarkPlayerFinishedResponse> Handle(MarkPlayerFinishedCommand request, CancellationToken cancellationToken)
     {
-        Console.WriteLine($"📝 MarkPlayerFinished received for GameSession: {request.GameSessionId}, User: {request.UserId}");
+        _logger.LogDebug("MarkPlayerFinished received for GameSession: {GameSessionId}, User: {UserId}", request.GameSessionId, request.UserId);
 
         // Get game session
         var gameSession = await _context.GameSessions
@@ -64,7 +67,7 @@ public class MarkPlayerFinishedCommandHandler : IRequestHandler<MarkPlayerFinish
         // and the game progresses together for all remaining players.
         // Keeping this handler for potential future use or migration.
 
-        Console.WriteLine($"⚠️ MarkPlayerFinished called but not applicable in Elimination mode");
+        _logger.LogDebug("MarkPlayerFinished called but not applicable in Elimination mode");
 
         // Get player stats from existing answers
         var playerAnswers = await _context.GameAnswers
@@ -89,8 +92,8 @@ public class MarkPlayerFinishedCommandHandler : IRequestHandler<MarkPlayerFinish
 
         bool allPlayersFinished = allPlayers <= 1; // Game ends when 1 or 0 players remain
 
-        Console.WriteLine($"📊 Active (non-eliminated) players: {allPlayers}, Game finished: {allPlayersFinished}");
-        Console.WriteLine($"📈 Player stats - Correct: {correctAnswers}, Wrong: {wrongAnswers}, Timeouts: {timeoutCount}");
+        _logger.LogDebug("Active (non-eliminated) players: {ActivePlayers}, Game finished: {AllFinished}", allPlayers, allPlayersFinished);
+        _logger.LogDebug("Player stats - Correct: {Correct}, Wrong: {Wrong}, Timeouts: {Timeouts}", correctAnswers, wrongAnswers, timeoutCount);
 
         return new MarkPlayerFinishedResponse
         {

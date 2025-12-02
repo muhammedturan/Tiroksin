@@ -2,15 +2,18 @@
 import { onMounted, onUnmounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import Header from './components/Header.vue'
+import ToastContainer from './components/ToastContainer.vue'
 import signalrService from './services/signalrService'
 import { useRoomStore } from './stores/room'
 import { useGameStore } from './stores/game'
 import { useThemeStore } from './stores/theme'
+import { useToastStore } from './stores/toast'
 
 const route = useRoute()
 const roomStore = useRoomStore()
 const gameStore = useGameStore()
 const themeStore = useThemeStore()
+const toastStore = useToastStore()
 
 // Header'ı login sayfasında gösterme
 const showHeader = computed(() => {
@@ -108,6 +111,7 @@ function setupSignalRListeners() {
     <div class="app-content">
       <router-view />
     </div>
+    <ToastContainer />
   </div>
 </template>
 

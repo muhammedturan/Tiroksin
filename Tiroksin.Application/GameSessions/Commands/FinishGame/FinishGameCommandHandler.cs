@@ -1,5 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Tiroksin.Application.Common.DTOs;
 using Tiroksin.Application.Common.Services;
 using Tiroksin.Domain.Enums;
 using Tiroksin.Infrastructure.Data;
@@ -10,16 +12,18 @@ public class FinishGameCommandHandler : IRequestHandler<FinishGameCommand, Finis
 {
     private readonly ApplicationDbContext _context;
     private readonly IXpService _xpService;
+    private readonly ILogger<FinishGameCommandHandler> _logger;
 
-    public FinishGameCommandHandler(ApplicationDbContext context, IXpService xpService)
+    public FinishGameCommandHandler(ApplicationDbContext context, IXpService xpService, ILogger<FinishGameCommandHandler> logger)
     {
         _context = context;
         _xpService = xpService;
+        _logger = logger;
     }
 
     public async Task<FinishGameResponse> Handle(FinishGameCommand request, CancellationToken cancellationToken)
     {
-        Console.WriteLine($"🏁 FinishGameCommand received for GameSession: {request.GameSessionId}");
+        _logger.LogInformation("FinishGameCommand received for GameSession: {GameSessionId}", request.GameSessionId);
 
         var gameSession = await _context.GameSessions
             .Include(gs => gs.Room)
@@ -29,7 +33,7 @@ public class FinishGameCommandHandler : IRequestHandler<FinishGameCommand, Finis
 
         if (gameSession == null)
         {
-            Console.WriteLine($"❌ Game session not found!");
+            _logger.LogWarning("Game session not found: {GameSessionId}", request.GameSessionId);
             return new FinishGameResponse
             {
                 Success = false,
@@ -37,11 +41,11 @@ public class FinishGameCommandHandler : IRequestHandler<FinishGameCommand, Finis
             };
         }
 
-        Console.WriteLine($"📊 Game session found. Status: {gameSession.Status}, Players count: {gameSession.Players?.Count ?? 0}");
+        _logger.LogDebug("Game session found. Status: {Status}, Players count: {PlayerCount}", gameSession.Status, gameSession.Players?.Count ?? 0);
 
         if (gameSession.Status == RoomStatus.Finished)
         {
-            Console.WriteLine($"⚠️ Game already finished!");
+            _logger.LogWarning("Game already finished: {GameSessionId}", request.GameSessionId);
             return new FinishGameResponse
             {
                 Success = false,
@@ -56,11 +60,7 @@ public class FinishGameCommandHandler : IRequestHandler<FinishGameCommand, Finis
             .ThenBy(p => p.EliminatedAtQuestionIndex ?? int.MaxValue) // Eliminated later = higher rank
             .ToList();
 
-        Console.WriteLine($"🏆 Ranked {rankedPlayers.Count} players:");
-        foreach (var p in rankedPlayers)
-        {
-            Console.WriteLine($"  - {p.User?.Username ?? "Unknown"}: Score={p.Score}, Correct={p.CorrectAnswers}, Wrong={p.WrongAnswers}");
-        }
+        _logger.LogDebug("Ranked {PlayerCount} players for GameSession: {GameSessionId}", rankedPlayers.Count, request.GameSessionId);
 
         var results = new List<PlayerResultDto>();
 
@@ -116,7 +116,7 @@ public class FinishGameCommandHandler : IRequestHandler<FinishGameCommand, Finis
             .Where(ga => ga.GameSessionId == request.GameSessionId)
             .ToListAsync(cancellationToken);
 
-        Console.WriteLine($"📝 Fetched {allAnswers.Count} player answers for review");
+        _logger.LogDebug("Fetched {AnswerCount} player answers for review", allAnswers.Count);
 
         // Group answers by question ID
         var allPlayersAnswers = allAnswers
@@ -134,7 +134,7 @@ public class FinishGameCommandHandler : IRequestHandler<FinishGameCommand, Finis
                 }).ToList()
             );
 
-        Console.WriteLine($"📊 Grouped answers by {allPlayersAnswers.Count} questions");
+        _logger.LogDebug("Grouped answers by {QuestionCount} questions", allPlayersAnswers.Count);
 
         // Update game session status
         gameSession.Status = RoomStatus.Finished;

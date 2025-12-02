@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Tiroksin.Application.Common.DTOs;
 using Tiroksin.Domain.Enums;
 using Tiroksin.Infrastructure.Data;
 

@@ -1,4 +1,5 @@
 using MediatR;
+using Tiroksin.Application.Common.DTOs;
 
 namespace Tiroksin.Application.GameSessions.Queries.GetGameSession;
 
@@ -60,23 +61,4 @@ public record GamePlayerAnswerDto
     public string? SelectedOptionId { get; init; }
     public bool IsCorrect { get; init; }
     public int TimeSpent { get; init; }
-}
-
-public record PlayerResultDto
-{
-    public Guid UserId { get; init; }
-    public string Username { get; init; } = string.Empty;
-    public string Avatar { get; init; } = "👤";
-    public int Rank { get; init; }
-    public int Score { get; init; }
-    public int CorrectAnswers { get; init; }
-    public int WrongAnswers { get; init; }
-    public int UnansweredCount { get; init; }
-    public int TotalTimeSpent { get; init; }
-    public double AverageTimePerQuestion { get; init; }
-    public int XpEarned { get; init; }
-    public int NewLevel { get; init; }
-    public int NewXp { get; init; }
-    public bool IsWinner { get; init; }
-    public List<string> AchievementsUnlocked { get; init; } = new();
 }

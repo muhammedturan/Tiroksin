@@ -32,7 +32,7 @@
 
         <div v-else-if="gameStore.currentQuestion" class="question-card">
           <div class="question-header">
-            <div class="question-text" v-html="gameStore.currentQuestion.text"></div>
+            <div class="question-text" v-html="getSafeQuestionText()"></div>
           </div>
 
           <div v-if="gameStore.currentQuestion.imageUrl" class="question-image-container">
@@ -46,7 +46,7 @@
               class="option-display"
             >
               <span class="option-key">{{ option.optionKey }}</span>
-              <span class="option-text" v-html="option.text"></span>
+              <span class="option-text" v-html="getSafeOptionText(option.text)"></span>
             </div>
           </div>
         </div>
@@ -114,6 +114,7 @@ import { useGameStore } from '../stores/game'
 import { useRoomStore } from '../stores/room'
 import signalrService from '../services/signalrService'
 import api from '../services/api'
+import { sanitizeHtml } from '../utils/sanitize'
 
 const router = useRouter()
 const route = useRoute()
@@ -126,6 +127,9 @@ const waitingForNextQuestion = ref(false) // Waiting state while active players 
 const nextQuestionCountdown = ref(0) // Countdown to sync with active players
 let timer = null
 let countdownTimer = null
+
+// Store remaining time from API for recovery on refresh
+let initialRemainingTime = null
 
 const activePlayersCount = computed(() => {
   return players.value.filter(p => !p.isEliminated).length
@@ -199,6 +203,13 @@ onMounted(async () => {
       if (gameData.currentQuestionIndex !== undefined) {
         gameStore.currentQuestionIndex = gameData.currentQuestionIndex
       }
+
+      // Load remaining time from API for timer synchronization
+      if (gameData.remainingTimeSeconds !== undefined && gameData.remainingTimeSeconds !== null) {
+        initialRemainingTime = gameData.remainingTimeSeconds
+        timeLeft.value = initialRemainingTime
+        console.log('✅ Spectator RemainingTime from API:', initialRemainingTime)
+      }
     } catch (error) {
       console.error('❌ Error loading game data:', error)
     }
@@ -264,8 +275,9 @@ function setupListeners() {
           gameStore.currentQuestionIndex = idx
         }
 
-        // Reset timer
+        // Reset timer with backend's timeLimit for synchronization
         timeLeft.value = pendingTimeLimit
+        console.log('⏱️ Spectator timer reset to:', pendingTimeLimit)
       }
     }, 1000)
   })
@@ -308,6 +320,15 @@ function stopTimer() {
 
 function isMe(userId) {
   return userId === localStorage.getItem('userId')
+}
+
+// XSS koruması için HTML temizleme fonksiyonları
+function getSafeQuestionText() {
+  return sanitizeHtml(gameStore.currentQuestion?.text || '')
+}
+
+function getSafeOptionText(text) {
+  return sanitizeHtml(text || '')
 }
 
 function getOptionsLayoutClass() {

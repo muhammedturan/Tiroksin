@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
@@ -8,22 +9,24 @@ namespace Tiroksin.Api.Hubs;
 /// <summary>
 /// SignalR Hub for real-time multiplayer game functionality
 /// </summary>
-// TODO: Production'da [Authorize] aktif edilmeli!
-// [Authorize]
+[Authorize]
 public class GameHub : Hub
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<GameHub> _logger;
 
-    public GameHub(ApplicationDbContext context)
+    public GameHub(ApplicationDbContext context, ILogger<GameHub> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     // Active connections: userId -> connectionId
     private static readonly ConcurrentDictionary<string, string> _connections = new();
 
-    // Room connections: roomId -> List<connectionId>
-    private static readonly ConcurrentDictionary<string, List<string>> _roomConnections = new();
+    // Room connections: roomId -> HashSet<connectionId> (thread-safe with lock)
+    private static readonly ConcurrentDictionary<string, HashSet<string>> _roomConnections = new();
+    private static readonly object _roomLock = new();
 
     public override async Task OnConnectedAsync()
     {
@@ -33,7 +36,7 @@ public class GameHub : Hub
         if (!string.IsNullOrEmpty(userId))
         {
             _connections[userId] = connectionId;
-            Console.WriteLine($"✅ User {userId} connected: {connectionId}");
+            _logger.LogInformation("User {UserId} connected with ConnectionId {ConnectionId}", userId, connectionId);
         }
 
         await base.OnConnectedAsync();
@@ -47,15 +50,24 @@ public class GameHub : Hub
         if (!string.IsNullOrEmpty(userId))
         {
             _connections.TryRemove(userId, out _);
-            Console.WriteLine($"❌ User {userId} disconnected: {connectionId}");
+            _logger.LogInformation("User {UserId} disconnected with ConnectionId {ConnectionId}", userId, connectionId);
 
-            // Remove from all rooms
-            foreach (var room in _roomConnections)
+            // Remove from all rooms with proper locking
+            var roomsToCleanup = new List<string>();
+            lock (_roomLock)
             {
-                room.Value.Remove(connectionId);
-                if (room.Value.Count == 0)
+                foreach (var room in _roomConnections)
                 {
-                    _roomConnections.TryRemove(room.Key, out _);
+                    room.Value.Remove(connectionId);
+                    if (room.Value.Count == 0)
+                    {
+                        roomsToCleanup.Add(room.Key);
+                    }
+                }
+                // Remove empty rooms
+                foreach (var roomId in roomsToCleanup)
+                {
+                    _roomConnections.TryRemove(roomId, out _);
                 }
             }
         }
@@ -72,18 +84,23 @@ public class GameHub : Hub
     /// </summary>
     public async Task JoinRoom(string roomId, string username, string avatar)
     {
-        Console.WriteLine($"🔵 JoinRoom called: roomId={roomId}, username={username}, connectionId={Context.ConnectionId}");
+        _logger.LogInformation("JoinRoom called: RoomId={RoomId}, Username={Username}, ConnectionId={ConnectionId}",
+            roomId, username, Context.ConnectionId);
 
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
-        Console.WriteLine($"✅ Added {username} to SignalR group: {roomId}");
+        _logger.LogDebug("Added {Username} to SignalR group {RoomId}", username, roomId);
 
-        // Track connection
-        if (!_roomConnections.ContainsKey(roomId))
+        // Track connection with thread-safe HashSet
+        lock (_roomLock)
         {
-            _roomConnections[roomId] = new List<string>();
+            if (!_roomConnections.ContainsKey(roomId))
+            {
+                _roomConnections[roomId] = new HashSet<string>();
+            }
+            _roomConnections[roomId].Add(Context.ConnectionId);
         }
-        _roomConnections[roomId].Add(Context.ConnectionId);
-        Console.WriteLine($"📊 _roomConnections for {roomId}: {_roomConnections[roomId].Count} connections");
+        var connectionCount = _roomConnections.TryGetValue(roomId, out var conns) ? conns.Count : 0;
+        _logger.LogDebug("Room {RoomId} has {ConnectionCount} connections", roomId, connectionCount);
 
         // Get userId from JWT token
         var userId = Context.UserIdentifier;
@@ -102,11 +119,7 @@ public class GameHub : Hub
             })
             .ToListAsync();
 
-        Console.WriteLine($"📋 Sending {existingPlayers.Count} existing players to {username}");
-        foreach (var p in existingPlayers)
-        {
-            Console.WriteLine($"   - {p.username} ({p.avatar}) Ready: {p.isReady}");
-        }
+        _logger.LogDebug("Sending {PlayerCount} existing players to {Username}", existingPlayers.Count, username);
 
         // Send existing players list to the newly joined player
         await Clients.Caller.SendAsync("RoomPlayersInitialized", new
@@ -114,9 +127,7 @@ public class GameHub : Hub
             players = existingPlayers
         });
 
-        // Log room connections before sending
-        var connectionCount = _roomConnections.ContainsKey(roomId) ? _roomConnections[roomId].Count : 0;
-        Console.WriteLine($"📡 Sending PlayerJoined to {connectionCount} connections in room {roomId}");
+        _logger.LogDebug("Sending PlayerJoined to {ConnectionCount} connections in room {RoomId}", connectionCount, roomId);
 
         // Notify all OTHER players in room about new player
         await Clients.OthersInGroup(roomId).SendAsync("PlayerJoined", new
@@ -124,10 +135,11 @@ public class GameHub : Hub
             userId,
             username,
             avatar,
-            message = $"{username} odaya katıldı! 🎮"
+            message = $"{username} odaya katıldı!"
         });
 
-        Console.WriteLine($"🚪 {username} joined room: {roomId} (total connections: {connectionCount})");
+        _logger.LogInformation("User {Username} joined room {RoomId}, total connections: {ConnectionCount}",
+            username, roomId, connectionCount);
     }
 
     /// <summary>
@@ -137,13 +149,16 @@ public class GameHub : Hub
     {
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
 
-        // Remove from tracking
-        if (_roomConnections.ContainsKey(roomId))
+        // Remove from tracking with thread-safety
+        lock (_roomLock)
         {
-            _roomConnections[roomId].Remove(Context.ConnectionId);
-            if (_roomConnections[roomId].Count == 0)
+            if (_roomConnections.TryGetValue(roomId, out var connections))
             {
-                _roomConnections.TryRemove(roomId, out _);
+                connections.Remove(Context.ConnectionId);
+                if (connections.Count == 0)
+                {
+                    _roomConnections.TryRemove(roomId, out _);
+                }
             }
         }
 
@@ -159,22 +174,22 @@ public class GameHub : Hub
             {
                 roomPlayer.LeftAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
-                Console.WriteLine($"💾 Database updated: {username} left room");
+                _logger.LogDebug("Database updated: {Username} left room", username);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"⚠️ Error updating database for leave room: {ex.Message}");
+            _logger.LogWarning(ex, "Error updating database for leave room: {Username}, {RoomId}", username, roomId);
         }
 
         // Notify all players in room
         await Clients.Group(roomId).SendAsync("PlayerLeft", new
         {
             username,
-            message = $"{username} odadan ayrıldı 👋"
+            message = $"{username} odadan ayrıldı"
         });
 
-        Console.WriteLine($"🚪 {username} left room: {roomId}");
+        _logger.LogInformation("User {Username} left room {RoomId}", username, roomId);
     }
 
     /// <summary>
@@ -192,7 +207,7 @@ public class GameHub : Hub
         {
             roomPlayer.IsReady = isReady;
             await _context.SaveChangesAsync();
-            Console.WriteLine($"💾 Database updated: {username} ready status = {isReady}");
+            _logger.LogDebug("Database updated: {Username} ready status = {IsReady}", username, isReady);
         }
 
         // Notify all players in room
@@ -200,10 +215,11 @@ public class GameHub : Hub
         {
             username,
             isReady,
-            message = isReady ? $"{username} hazır! ✅" : $"{username} hazır değil ⏳"
+            message = isReady ? $"{username} hazır!" : $"{username} hazır değil"
         });
 
-        Console.WriteLine($"⏱️ {username} ready status: {isReady}");
+        _logger.LogInformation("User {Username} ready status changed to {IsReady} in room {RoomId}",
+            username, isReady, roomId);
     }
 
     // ============================================
@@ -215,7 +231,8 @@ public class GameHub : Hub
     /// </summary>
     public static int GetRoomPlayerCount(string roomId)
     {
-        return _roomConnections.ContainsKey(roomId) ? _roomConnections[roomId].Count : 0;
+        // Thread-safe read using TryGetValue
+        return _roomConnections.TryGetValue(roomId, out var connections) ? connections.Count : 0;
     }
 
     /// <summary>

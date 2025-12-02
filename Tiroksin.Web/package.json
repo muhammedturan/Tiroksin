@@ -13,6 +13,7 @@
     "@supabase/supabase-js": "^2.76.1",
     "@vueup/vue-quill": "^1.2.0",
     "axios": "^1.12.2",
+    "dompurify": "^3.3.0",
     "pinia": "^3.0.3",
     "quill": "^2.0.3",
     "vue": "^3.5.22",

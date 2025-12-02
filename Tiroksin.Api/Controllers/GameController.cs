@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 using Tiroksin.Api.Hubs;
+using Tiroksin.Application.GameSessions.Commands.FinishGame;
 using Tiroksin.Application.GameSessions.Commands.SubmitAnswer;
 using Tiroksin.Application.GameSessions.Queries.GetGameSession;
 using Tiroksin.Application.GameSessions.Queries.GetGameSessionPlayers;
@@ -18,11 +19,13 @@ public class GameController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly IHubContext<GameHub> _hubContext;
+    private readonly ILogger<GameController> _logger;
 
-    public GameController(IMediator mediator, IHubContext<GameHub> hubContext)
+    public GameController(IMediator mediator, IHubContext<GameHub> hubContext, ILogger<GameController> logger)
     {
         _mediator = mediator;
         _hubContext = hubContext;
+        _logger = logger;
     }
 
     /// <summary>
@@ -63,7 +66,7 @@ public class GameController : ControllerBase
             countdown = 3
         });
 
-        Console.WriteLine($"🎮 Game started in room: {request.RoomId}, notified {gameSessionPlayers.Count} players");
+        _logger.LogInformation("Game started in room: {RoomId}, notified {PlayerCount} players", request.RoomId, gameSessionPlayers.Count);
 
         return Ok(response);
     }
@@ -74,9 +77,9 @@ public class GameController : ControllerBase
     [HttpPost("submit-answer")]
     public async Task<ActionResult<SubmitAnswerResponse>> SubmitAnswer([FromBody] SubmitAnswerRequest request)
     {
-        Console.WriteLine($"🎯 SubmitAnswer endpoint hit! GameSessionId: {request.GameSessionId}, QuestionId: {request.QuestionId}");
+        _logger.LogDebug("SubmitAnswer endpoint hit. GameSessionId: {GameSessionId}, QuestionId: {QuestionId}", request.GameSessionId, request.QuestionId);
         var userId = GetUserIdFromToken();
-        Console.WriteLine($"👤 UserId from token: {userId}");
+        _logger.LogDebug("UserId from token: {UserId}", userId);
 
         var command = new SubmitAnswerCommand
         {
@@ -124,15 +127,58 @@ public class GameController : ControllerBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error getting game session: {ex.Message}");
+            _logger.LogError(ex, "Error getting game session: {SessionId}", sessionId);
             return StatusCode(500, new { message = "Oyun durumu alınırken bir hata oluştu" });
+        }
+    }
+
+    /// <summary>
+    /// Finish the game and get final results
+    /// </summary>
+    [HttpPost("finish")]
+    public async Task<ActionResult<FinishGameResponse>> FinishGame([FromBody] FinishGameRequest request)
+    {
+        try
+        {
+            var command = new FinishGameCommand
+            {
+                GameSessionId = request.GameSessionId
+            };
+
+            var response = await _mediator.Send(command);
+
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+
+            // Notify all players via SignalR about game end
+            await _hubContext.Clients.Group(request.RoomId.ToString()).SendAsync("GameFinished", new
+            {
+                results = response.Results,
+                allPlayersAnswers = response.AllPlayersAnswers,
+                message = response.Message
+            });
+
+            _logger.LogInformation("Game finished: {GameSessionId}", request.GameSessionId);
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error finishing game: {GameSessionId}", request.GameSessionId);
+            return StatusCode(500, new { message = "Oyun sonlandırılırken bir hata oluştu" });
         }
     }
 
     private Guid GetUserIdFromToken()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        return Guid.Parse(userIdClaim!);
+        if (string.IsNullOrEmpty(userIdClaim))
+        {
+            throw new UnauthorizedAccessException("Token'da kullanıcı bilgisi bulunamadı");
+        }
+        return Guid.Parse(userIdClaim);
     }
 }
 
@@ -148,4 +194,10 @@ public record SubmitAnswerRequest
     public Guid QuestionId { get; init; }
     public Guid? SelectedOptionId { get; init; }
     public int TimeSpent { get; init; }
+}
+
+public record FinishGameRequest
+{
+    public Guid GameSessionId { get; init; }
+    public Guid RoomId { get; init; }
 }

@@ -64,7 +64,7 @@
         <div class="question-card">
           <!-- Question Text -->
           <div class="question-header">
-            <div class="question-text" v-html="gameStore.currentQuestion.text"></div>
+            <div class="question-text" v-html="getSafeQuestionText()"></div>
           </div>
 
           <!-- Question Image (if exists) -->
@@ -83,7 +83,7 @@
               :disabled="waitingForOthers || waitingForResults || answerSubmitted"
             >
               <span class="option-key">{{ option.optionKey }}</span>
-              <span class="option-text" v-html="option.text"></span>
+              <span class="option-text" v-html="getSafeOptionText(option.text)"></span>
             </button>
           </div>
 
@@ -111,6 +111,7 @@ import { useGameStore } from '../stores/game'
 import { useRoomStore } from '../stores/room'
 import signalrService from '../services/signalrService'
 import api from '../services/api'
+import { sanitizeHtml } from '../utils/sanitize'
 
 const router = useRouter()
 const route = useRoute()
@@ -523,7 +524,17 @@ function getCorrectOptionKey() {
 function getCorrectOptionText() {
   if (!currentAnswer.value || !gameStore.currentQuestion) return ''
   const correctOption = gameStore.currentQuestion.options.find(o => o.id === currentAnswer.value.correctOptionId)
-  return correctOption?.text || ''
+  return sanitizeHtml(correctOption?.text || '')
+}
+
+// Soru metnini güvenli hale getir
+function getSafeQuestionText() {
+  return sanitizeHtml(gameStore.currentQuestion?.text || '')
+}
+
+// Seçenek metnini güvenli hale getir
+function getSafeOptionText(text) {
+  return sanitizeHtml(text || '')
 }
 
 function getOptionsLayoutClass() {

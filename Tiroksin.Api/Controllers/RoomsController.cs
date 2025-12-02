@@ -11,6 +11,7 @@ namespace Tiroksin.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class RoomsController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -95,7 +96,11 @@ public class RoomsController : ControllerBase
     private Guid GetUserIdFromToken()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        return Guid.Parse(userIdClaim!);
+        if (string.IsNullOrEmpty(userIdClaim))
+        {
+            throw new UnauthorizedAccessException("Token'da kullanıcı bilgisi bulunamadı");
+        }
+        return Guid.Parse(userIdClaim);
     }
 }
 

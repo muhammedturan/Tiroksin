@@ -85,15 +85,17 @@ public class StartGameCommandHandler : IRequestHandler<StartGameCommand, StartGa
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        // Prepare first question DTO
+        // Prepare first question DTO - Options'ları karıştır
+        var shuffledOptions = firstQuestion.Options.ToList();
+        ShuffleList(shuffledOptions);
+
         var questionDto = new GameQuestionDto
         {
             Id = firstQuestion.Id,
             Text = firstQuestion.Text,
             ImageUrl = firstQuestion.ImageUrl,
             Points = firstQuestion.Points,
-            Options = firstQuestion.Options
-                .OrderBy(o => Guid.NewGuid()) // Shuffle options
+            Options = shuffledOptions
                 .Select((o, index) => new GameOptionDto
                 {
                     Id = o.Id,
@@ -115,7 +117,6 @@ public class StartGameCommandHandler : IRequestHandler<StartGameCommand, StartGa
     private async Task<Question?> SelectRandomQuestionAsync(List<Guid> excludeIds, CancellationToken cancellationToken)
     {
         var query = _context.Questions
-            .Include(q => q.Options)
             .Where(q => q.Status == QuestionStatus.Approved);
 
         if (excludeIds.Any())
@@ -123,8 +124,29 @@ public class StartGameCommandHandler : IRequestHandler<StartGameCommand, StartGa
             query = query.Where(q => !excludeIds.Contains(q.Id));
         }
 
-        return await query
-            .OrderBy(q => Guid.NewGuid())
-            .FirstOrDefaultAsync(cancellationToken);
+        // Önce uygun soruların ID'lerini al, sonra bellekte rastgele seç
+        var availableIds = await query.Select(q => q.Id).ToListAsync(cancellationToken);
+
+        if (availableIds.Count == 0)
+            return null;
+
+        // Thread-safe random seçim
+        var randomId = availableIds[Random.Shared.Next(availableIds.Count)];
+
+        return await _context.Questions
+            .Include(q => q.Options)
+            .FirstOrDefaultAsync(q => q.Id == randomId, cancellationToken);
+    }
+
+    /// <summary>
+    /// Fisher-Yates shuffle algoritması - O(n) karmaşıklık, uniform dağılım
+    /// </summary>
+    private static void ShuffleList<T>(List<T> list)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = Random.Shared.Next(i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
     }
 }
