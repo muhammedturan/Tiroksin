@@ -15,8 +15,9 @@ public class SubmitAnswerCommandValidator : AbstractValidator<SubmitAnswerComman
         RuleFor(x => x.QuestionId)
             .NotEmpty().WithMessage("Soru kimliği gereklidir.");
 
+        // TimeSpent is now calculated by backend from QuestionStartedAt
+        // Client-provided value is only used as fallback, so we just ensure it's not negative
         RuleFor(x => x.TimeSpent)
-            .GreaterThanOrEqualTo(0).WithMessage("Geçen süre negatif olamaz.")
-            .LessThanOrEqualTo(120).WithMessage("Geçen süre 120 saniyeyi aşamaz.");
+            .GreaterThanOrEqualTo(0).WithMessage("Geçen süre negatif olamaz.");
     }
 }

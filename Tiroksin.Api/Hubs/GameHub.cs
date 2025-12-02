@@ -97,9 +97,9 @@ public class GameHub : Hub
             return;
         }
 
-        // Sanitize inputs to prevent XSS
+        // Sanitize username to prevent XSS (avatar is emoji-only, no encoding needed)
         username = System.Net.WebUtility.HtmlEncode(username.Trim());
-        avatar = string.IsNullOrWhiteSpace(avatar) ? "👤" : System.Net.WebUtility.HtmlEncode(avatar.Trim());
+        avatar = string.IsNullOrWhiteSpace(avatar) ? "👤" : avatar.Trim();
 
         _logger.LogInformation("JoinRoom called: RoomId={RoomId}, Username={Username}, ConnectionId={ConnectionId}",
             roomId, username, Context.ConnectionId);

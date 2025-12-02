@@ -61,10 +61,13 @@ export const useGameStore = defineStore('game', () => {
     }
   }
 
-  async function submitAnswer(selectedOptionId) {
+  async function submitAnswer(selectedOptionId, providedTimeSpent = null) {
     if (!currentQuestion.value || !gameSessionId.value) return
 
-    const timeSpent = Math.floor((Date.now() - questionStartTime.value) / 1000)
+    // Use provided timeSpent if available, otherwise calculate from questionStartTime
+    const timeSpent = providedTimeSpent !== null
+      ? providedTimeSpent
+      : Math.max(0, Math.floor((Date.now() - (questionStartTime.value || Date.now())) / 1000))
 
     try {
       const data = await gameService.submitAnswer(

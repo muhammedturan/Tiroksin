@@ -463,12 +463,13 @@ async function submitAnswer() {
   answerSubmitted.value = true
   stopTimer()
 
-  const timeSpent = (gameStore.currentQuestion?.timePerQuestion || 60) - timeLeft.value
+  // Calculate timeSpent from the local timer (more accurate than store's questionStartTime)
+  const timeSpent = Math.max(0, (gameStore.currentQuestion?.timePerQuestion || 60) - timeLeft.value)
   console.log('⏱️ Time spent:', timeSpent)
 
   try {
     console.log('📤 Calling gameStore.submitAnswer...')
-    const result = await gameStore.submitAnswer(selectedOption.value)
+    const result = await gameStore.submitAnswer(selectedOption.value, timeSpent)
     console.log('📥 Received result:', result)
     currentAnswer.value = result
 
@@ -496,8 +497,11 @@ async function autoSubmitOnTimeout() {
   answerSubmitted.value = true
   stopTimer()
 
+  // Timeout = full question time
+  const timeSpent = gameStore.currentQuestion?.timePerQuestion || 60
+
   try {
-    const result = await gameStore.submitAnswer(selectedOption.value) // null olabilir
+    const result = await gameStore.submitAnswer(selectedOption.value, timeSpent) // null olabilir
     console.log('📥 Timeout result:', result)
     currentAnswer.value = result
 

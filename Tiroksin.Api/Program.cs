@@ -135,10 +135,12 @@ builder.Services.AddCors(options =>
     {
         if (builder.Environment.IsDevelopment())
         {
-            // Development: Allow localhost ports
-            policy.WithOrigins(
-                      "http://localhost:3000",
-                      "http://localhost:5173")
+            // Development: Allow all localhost ports for easy testing
+            policy.SetIsOriginAllowed(origin =>
+                  {
+                      var uri = new Uri(origin);
+                      return uri.Host == "localhost" || uri.Host == "127.0.0.1";
+                  })
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();

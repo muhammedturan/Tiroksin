@@ -6,7 +6,7 @@
           <span class="room-icon">🎮</span>
           <h1>{{ roomStore.currentRoom?.name }}</h1>
         </div>
-        <button @click="handleLeaveRoom" class="btn-leave">Cikis</button>
+        <button @click="handleLeaveRoom" class="btn-leave">🚪 Odadan Ayrıl</button>
       </div>
 
       <div class="room-code-section">
@@ -219,14 +219,14 @@ function copyRoomCode() {
 }
 
 .btn-leave {
-  background: var(--bg-card-light);
-  border: 1px solid var(--border);
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid var(--error);
   padding: 10px 18px;
   border-radius: 10px;
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--error);
   transition: all 0.2s;
 }
 
@@ -234,6 +234,8 @@ function copyRoomCode() {
   background: var(--error);
   border-color: var(--error);
   color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .room-code-section {

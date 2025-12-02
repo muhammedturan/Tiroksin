@@ -82,8 +82,23 @@ public class SubmitAnswerCommandHandler : IRequestHandler<SubmitAnswerCommand, S
             return new SubmitAnswerResponse { Success = false, Message = "Soru hatalı" };
         }
 
+        // Calculate timeSpent from backend (more secure than client-provided value)
+        int timeSpent;
+        if (gameSession.QuestionStartedAt.HasValue)
+        {
+            timeSpent = (int)(DateTime.UtcNow - gameSession.QuestionStartedAt.Value).TotalSeconds;
+            // Cap at question timeout (default 60 seconds)
+            const int defaultQuestionTimeout = 60;
+            timeSpent = Math.Min(timeSpent, defaultQuestionTimeout);
+        }
+        else
+        {
+            // Fallback to client value if QuestionStartedAt not set (shouldn't happen)
+            timeSpent = Math.Max(0, Math.Min(request.TimeSpent, 60));
+        }
+
         bool isCorrect = request.SelectedOptionId.HasValue && request.SelectedOptionId.Value == correctOption.Id;
-        bool isTimeout = request.TimeSpent >= 60;
+        bool isTimeout = timeSpent >= 60 || !request.SelectedOptionId.HasValue;
         int pointsEarned = isCorrect ? question.Points : 0;
         bool isEliminated = !isCorrect; // Wrong answer = eliminated
 
@@ -96,7 +111,7 @@ public class SubmitAnswerCommandHandler : IRequestHandler<SubmitAnswerCommand, S
             QuestionId = request.QuestionId,
             SelectedOptionId = request.SelectedOptionId,
             IsCorrect = isCorrect,
-            TimeSpent = request.TimeSpent,
+            TimeSpent = timeSpent, // Use backend-calculated timeSpent
             IsTimeout = isTimeout,
             AnsweredAt = DateTime.UtcNow
         };
