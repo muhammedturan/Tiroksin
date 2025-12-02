@@ -1,7 +1,6 @@
 using Tiroksin.Application.Common;
 using Tiroksin.Application.Common.Interfaces;
 using Tiroksin.Domain.Entities;
-using Tiroksin.Infrastructure.Data;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,10 +8,10 @@ namespace Tiroksin.Application.Auth.Commands.Register;
 
 public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<AuthResponse>>
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IApplicationDbContext _context;
     private readonly IJwtTokenService _jwtTokenService;
 
-    public RegisterCommandHandler(ApplicationDbContext context, IJwtTokenService jwtTokenService)
+    public RegisterCommandHandler(IApplicationDbContext context, IJwtTokenService jwtTokenService)
     {
         _context = context;
         _jwtTokenService = jwtTokenService;

@@ -84,6 +84,23 @@ public class GameHub : Hub
     /// </summary>
     public async Task JoinRoom(string roomId, string username, string avatar)
     {
+        // Input validation
+        if (!Guid.TryParse(roomId, out var roomGuid))
+        {
+            await Clients.Caller.SendAsync("Error", new { message = "Geçersiz oda kimliği" });
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(username) || username.Length > 50)
+        {
+            await Clients.Caller.SendAsync("Error", new { message = "Geçersiz kullanıcı adı" });
+            return;
+        }
+
+        // Sanitize inputs to prevent XSS
+        username = System.Net.WebUtility.HtmlEncode(username.Trim());
+        avatar = string.IsNullOrWhiteSpace(avatar) ? "👤" : System.Net.WebUtility.HtmlEncode(avatar.Trim());
+
         _logger.LogInformation("JoinRoom called: RoomId={RoomId}, Username={Username}, ConnectionId={ConnectionId}",
             roomId, username, Context.ConnectionId);
 
@@ -106,7 +123,6 @@ public class GameHub : Hub
         var userId = Context.UserIdentifier;
 
         // Get existing players from database
-        var roomGuid = Guid.Parse(roomId);
         var existingPlayers = await _context.RoomPlayers
             .Where(rp => rp.RoomId == roomGuid && rp.LeftAt == null)
             .Include(rp => rp.User)
@@ -147,6 +163,21 @@ public class GameHub : Hub
     /// </summary>
     public async Task LeaveRoom(string roomId, string username)
     {
+        // Input validation
+        if (!Guid.TryParse(roomId, out var roomGuid))
+        {
+            await Clients.Caller.SendAsync("Error", new { message = "Geçersiz oda kimliği" });
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(username) || username.Length > 50)
+        {
+            await Clients.Caller.SendAsync("Error", new { message = "Geçersiz kullanıcı adı" });
+            return;
+        }
+
+        username = System.Net.WebUtility.HtmlEncode(username.Trim());
+
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
 
         // Remove from tracking with thread-safety
@@ -165,7 +196,6 @@ public class GameHub : Hub
         // Update database - mark player as left
         try
         {
-            var roomGuid = Guid.Parse(roomId);
             var roomPlayer = await _context.RoomPlayers
                 .Include(rp => rp.User)
                 .FirstOrDefaultAsync(rp => rp.RoomId == roomGuid && rp.User.Username == username && rp.LeftAt == null);
@@ -197,8 +227,22 @@ public class GameHub : Hub
     /// </summary>
     public async Task PlayerReady(string roomId, string username, bool isReady)
     {
+        // Input validation
+        if (!Guid.TryParse(roomId, out var roomGuid))
+        {
+            await Clients.Caller.SendAsync("Error", new { message = "Geçersiz oda kimliği" });
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(username) || username.Length > 50)
+        {
+            await Clients.Caller.SendAsync("Error", new { message = "Geçersiz kullanıcı adı" });
+            return;
+        }
+
+        username = System.Net.WebUtility.HtmlEncode(username.Trim());
+
         // Update database
-        var roomGuid = Guid.Parse(roomId);
         var roomPlayer = await _context.RoomPlayers
             .Include(rp => rp.User)
             .FirstOrDefaultAsync(rp => rp.RoomId == roomGuid && rp.User.Username == username && rp.LeftAt == null);

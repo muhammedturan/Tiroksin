@@ -1,16 +1,16 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Tiroksin.Application.Common.Interfaces;
 using Tiroksin.Domain.Entities;
 using Tiroksin.Domain.Enums;
-using Tiroksin.Infrastructure.Data;
 
 namespace Tiroksin.Application.Rooms.Commands.CreateRoom;
 
 public class CreateRoomCommandHandler : IRequestHandler<CreateRoomCommand, CreateRoomResponse>
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IApplicationDbContext _context;
 
-    public CreateRoomCommandHandler(ApplicationDbContext context)
+    public CreateRoomCommandHandler(IApplicationDbContext context)
     {
         _context = context;
     }

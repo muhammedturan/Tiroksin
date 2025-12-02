@@ -22,8 +22,11 @@ public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("Şifre gereklidir.")
-            .MinimumLength(6).WithMessage("Şifre en az 6 karakter olmalıdır.")
-            .MaximumLength(100).WithMessage("Şifre en fazla 100 karakter olabilir.");
+            .MinimumLength(8).WithMessage("Şifre en az 8 karakter olmalıdır.")
+            .MaximumLength(128).WithMessage("Şifre en fazla 128 karakter olabilir.")
+            .Matches("[A-Z]").WithMessage("Şifre en az bir büyük harf içermelidir.")
+            .Matches("[a-z]").WithMessage("Şifre en az bir küçük harf içermelidir.")
+            .Matches("[0-9]").WithMessage("Şifre en az bir rakam içermelidir.");
 
         RuleFor(x => x.Theme)
             .Must(t => t == "dark" || t == "light").WithMessage("Tema 'dark' veya 'light' olmalıdır.");

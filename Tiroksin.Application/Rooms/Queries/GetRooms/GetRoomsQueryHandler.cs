@@ -1,15 +1,15 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Tiroksin.Application.Common.Interfaces;
 using Tiroksin.Domain.Enums;
-using Tiroksin.Infrastructure.Data;
 
 namespace Tiroksin.Application.Rooms.Queries.GetRooms;
 
 public class GetRoomsQueryHandler : IRequestHandler<GetRoomsQuery, List<RoomDto>>
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IApplicationDbContext _context;
 
-    public GetRoomsQueryHandler(ApplicationDbContext context)
+    public GetRoomsQueryHandler(IApplicationDbContext context)
     {
         _context = context;
     }

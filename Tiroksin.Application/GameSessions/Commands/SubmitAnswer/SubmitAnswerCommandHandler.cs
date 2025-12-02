@@ -1,19 +1,19 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Tiroksin.Application.Common.Interfaces;
 using Tiroksin.Domain.Entities;
 using Tiroksin.Domain.Enums;
-using Tiroksin.Infrastructure.Data;
 
 namespace Tiroksin.Application.GameSessions.Commands.SubmitAnswer;
 
 public class SubmitAnswerCommandHandler : IRequestHandler<SubmitAnswerCommand, SubmitAnswerResponse>
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IApplicationDbContext _context;
     private readonly IMediator _mediator;
     private readonly ILogger<SubmitAnswerCommandHandler> _logger;
 
-    public SubmitAnswerCommandHandler(ApplicationDbContext context, IMediator mediator, ILogger<SubmitAnswerCommandHandler> logger)
+    public SubmitAnswerCommandHandler(IApplicationDbContext context, IMediator mediator, ILogger<SubmitAnswerCommandHandler> logger)
     {
         _context = context;
         _mediator = mediator;

@@ -1,11 +1,13 @@
 using Tiroksin.Application.Parameters.Queries.GetParameterValues;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Tiroksin.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ParametersController : ControllerBase
 {
     private readonly IMediator _mediator;

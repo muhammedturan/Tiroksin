@@ -1,10 +1,11 @@
+using Tiroksin.Application.Common.Interfaces;
 using Tiroksin.Domain.Entities;
 using Tiroksin.Infrastructure.Data.Seeds;
 using Microsoft.EntityFrameworkCore;
 
 namespace Tiroksin.Infrastructure.Data;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext : DbContext, IApplicationDbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {

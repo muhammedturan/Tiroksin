@@ -1,5 +1,5 @@
 using Tiroksin.Application.Common;
-using Tiroksin.Infrastructure.Data;
+using Tiroksin.Application.Common.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,9 +7,9 @@ namespace Tiroksin.Application.Auth.Commands.UpdateTheme;
 
 public class UpdateThemeCommandHandler : IRequestHandler<UpdateThemeCommand, Result<bool>>
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IApplicationDbContext _context;
 
-    public UpdateThemeCommandHandler(ApplicationDbContext context)
+    public UpdateThemeCommandHandler(IApplicationDbContext context)
     {
         _context = context;
     }

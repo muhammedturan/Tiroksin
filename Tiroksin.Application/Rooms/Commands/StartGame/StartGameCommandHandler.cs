@@ -1,16 +1,16 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Tiroksin.Application.Common.Interfaces;
 using Tiroksin.Domain.Entities;
 using Tiroksin.Domain.Enums;
-using Tiroksin.Infrastructure.Data;
 
 namespace Tiroksin.Application.Rooms.Commands.StartGame;
 
 public class StartGameCommandHandler : IRequestHandler<StartGameCommand, StartGameResponse>
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IApplicationDbContext _context;
 
-    public StartGameCommandHandler(ApplicationDbContext context)
+    public StartGameCommandHandler(IApplicationDbContext context)
     {
         _context = context;
     }

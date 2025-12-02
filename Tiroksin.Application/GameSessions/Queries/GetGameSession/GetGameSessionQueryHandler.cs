@@ -1,16 +1,16 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Tiroksin.Application.Common.DTOs;
+using Tiroksin.Application.Common.Interfaces;
 using Tiroksin.Domain.Enums;
-using Tiroksin.Infrastructure.Data;
 
 namespace Tiroksin.Application.GameSessions.Queries.GetGameSession;
 
 public class GetGameSessionQueryHandler : IRequestHandler<GetGameSessionQuery, GetGameSessionResponse?>
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IApplicationDbContext _context;
 
-    public GetGameSessionQueryHandler(ApplicationDbContext context)
+    public GetGameSessionQueryHandler(IApplicationDbContext context)
     {
         _context = context;
     }

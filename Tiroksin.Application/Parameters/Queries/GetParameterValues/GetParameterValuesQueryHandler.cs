@@ -1,5 +1,5 @@
 using Tiroksin.Application.Common;
-using Tiroksin.Infrastructure.Data;
+using Tiroksin.Application.Common.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,9 +7,9 @@ namespace Tiroksin.Application.Parameters.Queries.GetParameterValues;
 
 public class GetParameterValuesQueryHandler : IRequestHandler<GetParameterValuesQuery, Result<List<ParameterValueDto>>>
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IApplicationDbContext _context;
 
-    public GetParameterValuesQueryHandler(ApplicationDbContext context)
+    public GetParameterValuesQueryHandler(IApplicationDbContext context)
     {
         _context = context;
     }

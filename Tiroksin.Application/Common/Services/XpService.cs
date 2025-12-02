@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Tiroksin.Application.Common.Interfaces;
 using Tiroksin.Domain.Entities;
-using Tiroksin.Infrastructure.Data;
 
 namespace Tiroksin.Application.Common.Services;
 
@@ -13,9 +13,9 @@ public interface IXpService
 
 public class XpService : IXpService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IApplicationDbContext _context;
 
-    public XpService(ApplicationDbContext context)
+    public XpService(IApplicationDbContext context)
     {
         _context = context;
     }

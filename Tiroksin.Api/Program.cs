@@ -21,6 +21,14 @@ if (string.IsNullOrWhiteSpace(jwtKey))
         "appsettings.{Environment}.json, or via environment variable 'Jwt__Key'.");
 }
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Database connection string is not configured. Set 'ConnectionStrings:DefaultConnection' in " +
+        "appsettings.{Environment}.json or via environment variable 'ConnectionStrings__DefaultConnection'.");
+}
+
 // Add services to the container.
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -67,6 +75,10 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
            .UseSnakeCaseNamingConvention());
+
+// Register IApplicationDbContext interface for Application layer
+builder.Services.AddScoped<Tiroksin.Application.Common.Interfaces.IApplicationDbContext>(provider =>
+    provider.GetRequiredService<ApplicationDbContext>());
 
 // MediatR with validation pipeline
 builder.Services.AddMediatR(cfg =>
@@ -116,25 +128,39 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // SignalR
 builder.Services.AddSignalR();
 
-// CORS
+// CORS - Environment-based configuration
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins(
-                  "http://localhost:3000",
-                  "http://localhost:3001",
-                  "http://localhost:3002",
-                  "http://localhost:3003",
-                  "http://localhost:3004",
-                  "http://localhost:3005",
-                  "http://localhost:3006",
-                  "http://localhost:3007",
-                  "http://localhost:3008",
-                  "http://localhost:3009")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        if (builder.Environment.IsDevelopment())
+        {
+            // Development: Allow localhost ports
+            policy.WithOrigins(
+                      "http://localhost:3000",
+                      "http://localhost:5173")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
+        else
+        {
+            // Production: Use configured origins
+            var allowedOrigins = builder.Configuration
+                .GetSection("Cors:AllowedOrigins")
+                .Get<string[]>() ?? Array.Empty<string>();
+
+            if (allowedOrigins.Length == 0)
+            {
+                throw new InvalidOperationException(
+                    "CORS origins not configured for production. Set 'Cors:AllowedOrigins' in configuration.");
+            }
+
+            policy.WithOrigins(allowedOrigins)
+                  .WithHeaders("Content-Type", "Authorization")
+                  .WithMethods("GET", "POST", "PUT", "DELETE")
+                  .AllowCredentials();
+        }
     });
 });
 
@@ -147,8 +173,31 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Redirect root to Swagger
-app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
+// Redirect root to Swagger (only in development)
+if (app.Environment.IsDevelopment())
+{
+    app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
+}
+else
+{
+    app.MapGet("/", () => Results.Ok(new { name = "Tiroksin API", status = "healthy" })).ExcludeFromDescription();
+}
+
+// Security headers
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+
+    if (!app.Environment.IsDevelopment())
+    {
+        context.Response.Headers.Append("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    }
+
+    await next();
+});
 
 app.UseStaticFiles();
 app.UseCors();

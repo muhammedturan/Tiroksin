@@ -1,6 +1,6 @@
 using Tiroksin.Application.Common;
+using Tiroksin.Application.Common.Interfaces;
 using Tiroksin.Domain.Entities;
-using Tiroksin.Infrastructure.Data;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,9 +8,9 @@ namespace Tiroksin.Application.Questions.Commands.CreateQuestion;
 
 public class CreateQuestionCommandHandler : IRequestHandler<CreateQuestionCommand, Result<CreateQuestionResponse>>
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IApplicationDbContext _context;
 
-    public CreateQuestionCommandHandler(ApplicationDbContext context)
+    public CreateQuestionCommandHandler(IApplicationDbContext context)
     {
         _context = context;
     }

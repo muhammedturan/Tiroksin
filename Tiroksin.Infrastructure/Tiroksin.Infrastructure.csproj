@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Tiroksin.Domain\Tiroksin.Domain.csproj" />
+    <ProjectReference Include="..\Tiroksin.Application\Tiroksin.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>

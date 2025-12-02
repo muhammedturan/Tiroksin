@@ -1,18 +1,18 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Tiroksin.Application.Common.Interfaces;
 using Tiroksin.Domain.Entities;
 using Tiroksin.Domain.Enums;
-using Tiroksin.Infrastructure.Data;
 
 namespace Tiroksin.Application.GameSessions.Commands.MarkPlayerFinished;
 
 public class MarkPlayerFinishedCommandHandler : IRequestHandler<MarkPlayerFinishedCommand, MarkPlayerFinishedResponse>
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IApplicationDbContext _context;
     private readonly ILogger<MarkPlayerFinishedCommandHandler> _logger;
 
-    public MarkPlayerFinishedCommandHandler(ApplicationDbContext context, ILogger<MarkPlayerFinishedCommandHandler> logger)
+    public MarkPlayerFinishedCommandHandler(IApplicationDbContext context, ILogger<MarkPlayerFinishedCommandHandler> logger)
     {
         _context = context;
         _logger = logger;

@@ -2,19 +2,19 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Tiroksin.Application.Common.DTOs;
+using Tiroksin.Application.Common.Interfaces;
 using Tiroksin.Application.Common.Services;
 using Tiroksin.Domain.Enums;
-using Tiroksin.Infrastructure.Data;
 
 namespace Tiroksin.Application.GameSessions.Commands.FinishGame;
 
 public class FinishGameCommandHandler : IRequestHandler<FinishGameCommand, FinishGameResponse>
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IApplicationDbContext _context;
     private readonly IXpService _xpService;
     private readonly ILogger<FinishGameCommandHandler> _logger;
 
-    public FinishGameCommandHandler(ApplicationDbContext context, IXpService xpService, ILogger<FinishGameCommandHandler> logger)
+    public FinishGameCommandHandler(IApplicationDbContext context, IXpService xpService, ILogger<FinishGameCommandHandler> logger)
     {
         _context = context;
         _xpService = xpService;

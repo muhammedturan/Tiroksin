@@ -1,16 +1,16 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Tiroksin.Application.Common.Interfaces;
 using Tiroksin.Domain.Entities;
 using Tiroksin.Domain.Enums;
-using Tiroksin.Infrastructure.Data;
 
 namespace Tiroksin.Application.Rooms.Commands.JoinRoom;
 
 public class JoinRoomCommandHandler : IRequestHandler<JoinRoomCommand, JoinRoomResponse>
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IApplicationDbContext _context;
 
-    public JoinRoomCommandHandler(ApplicationDbContext context)
+    public JoinRoomCommandHandler(IApplicationDbContext context)
     {
         _context = context;
     }

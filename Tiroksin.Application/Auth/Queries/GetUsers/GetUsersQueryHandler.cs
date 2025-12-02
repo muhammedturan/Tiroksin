@@ -1,5 +1,5 @@
 using Tiroksin.Application.Common;
-using Tiroksin.Infrastructure.Data;
+using Tiroksin.Application.Common.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,9 +7,9 @@ namespace Tiroksin.Application.Auth.Queries.GetUsers;
 
 public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, Result<List<UserDto>>>
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IApplicationDbContext _context;
 
-    public GetUsersQueryHandler(ApplicationDbContext context)
+    public GetUsersQueryHandler(IApplicationDbContext context)
     {
         _context = context;
     }

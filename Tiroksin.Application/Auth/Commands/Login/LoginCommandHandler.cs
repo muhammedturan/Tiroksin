@@ -1,6 +1,5 @@
 using Tiroksin.Application.Common;
 using Tiroksin.Application.Common.Interfaces;
-using Tiroksin.Infrastructure.Data;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,10 +7,10 @@ namespace Tiroksin.Application.Auth.Commands.Login;
 
 public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResponse>>
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IApplicationDbContext _context;
     private readonly IJwtTokenService _jwtTokenService;
 
-    public LoginCommandHandler(ApplicationDbContext context, IJwtTokenService jwtTokenService)
+    public LoginCommandHandler(IApplicationDbContext context, IJwtTokenService jwtTokenService)
     {
         _context = context;
         _jwtTokenService = jwtTokenService;
@@ -19,18 +18,20 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
 
     public async Task<Result<AuthResponse>> Handle(LoginCommand command, CancellationToken cancellationToken)
     {
-        var usernameOrEmail = command.Username.ToLower();
+        var usernameOrEmail = command.Username.ToLower().Trim();
 
         // Email veya username ile giriş yapılabilir
         var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Username == usernameOrEmail || u.Email == usernameOrEmail, cancellationToken);
+            .FirstOrDefaultAsync(u => u.Username.ToLower() == usernameOrEmail || u.Email.ToLower() == usernameOrEmail, cancellationToken);
 
-        if (user == null)
-            return Result<AuthResponse>.Fail("Kullanıcı bulunamadı");
+        // Use constant-time password verification to prevent timing attacks
+        // Always verify password even if user not found (prevents user enumeration)
+        var passwordHash = user?.PasswordHash ?? "$2a$11$InvalidHashForTimingAttackPrevention";
+        var isPasswordValid = BCrypt.Net.BCrypt.Verify(command.Password, passwordHash);
 
-        // Verify password
-        if (!BCrypt.Net.BCrypt.Verify(command.Password, user.PasswordHash))
-            return Result<AuthResponse>.Fail("Şifre hatalı");
+        // Generic error message to prevent user enumeration
+        if (user == null || !isPasswordValid)
+            return Result<AuthResponse>.Fail("Kullanıcı adı veya şifre hatalı");
 
         var token = _jwtTokenService.GenerateToken(user);
 
