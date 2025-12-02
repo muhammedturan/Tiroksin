@@ -3,37 +3,39 @@
     <div class="modal">
       <div class="modal-header">
         <span class="header-icon">🎮</span>
-        <h2>Yeni Oda Olustur</h2>
+        <h2>Yeni Oda Oluştur</h2>
         <button @click="$emit('close')" class="close">✕</button>
       </div>
 
       <div class="modal-body">
-        <div class="form-group">
-          <label>Oda Adi</label>
-          <input
-            v-model="form.name"
-            type="text"
-            placeholder="Ornek: Efsane Yaris"
-            maxlength="50"
-            @keyup.enter="handleCreate"
-          />
-        </div>
+        <MarioInput
+          v-model="form.name"
+          label="Oda Adı"
+          placeholder="Örnek: Efsane Yarış"
+          :maxlength="50"
+          prefix="🏠"
+          @enter="handleCreate"
+        />
+
+        <MarioInput
+          v-model="form.questionCount"
+          type="number"
+          label="Soru Sayısı"
+          :min="5"
+          :max="50"
+          hint="Her soru için 60 saniye süre"
+          prefix="❓"
+        />
 
         <div class="form-group">
-          <label>Soru Sayisi</label>
-          <input v-model.number="form.questionCount" type="number" min="5" max="50" />
-          <small class="hint">Her soru icin 60 saniye sure</small>
-        </div>
-
-        <div class="form-group">
-          <label>Oda Tipi</label>
+          <label class="toggle-label">Oda Tipi</label>
           <div class="toggle-group">
             <button
               type="button"
               :class="['toggle-btn', { active: form.isPublic }]"
               @click="form.isPublic = true"
             >
-              🌐 Acik
+              🌐 Açık
             </button>
             <button
               type="button"
@@ -45,24 +47,29 @@
           </div>
         </div>
 
-        <div v-if="!form.isPublic" class="form-group">
-          <label>Parola</label>
-          <input
-            v-model="form.password"
-            type="password"
-            placeholder="Odaya giris parolasi"
-            maxlength="20"
-          />
-        </div>
+        <MarioInput
+          v-if="!form.isPublic"
+          v-model="form.password"
+          type="password"
+          label="Parola"
+          placeholder="Odaya giriş parolası"
+          :maxlength="20"
+          prefix="🔑"
+        />
 
         <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
       </div>
 
       <div class="modal-footer">
-        <button @click="$emit('close')" class="btn-cancel">Iptal</button>
-        <button @click="handleCreate" :disabled="!isValid || loading" class="btn-create">
-          {{ loading ? 'Olusturuluyor...' : 'Oda Olustur' }}
-        </button>
+        <MarioButton color="gray" @click="$emit('close')">İptal</MarioButton>
+        <MarioButton
+          color="green"
+          :disabled="!isValid"
+          :loading="loading"
+          @click="handleCreate"
+        >
+          Oda Oluştur
+        </MarioButton>
       </div>
     </div>
   </div>
@@ -72,6 +79,8 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useRoomStore } from '../stores/room'
+import MarioInput from './MarioInput.vue'
+import MarioButton from './MarioButton.vue'
 
 const emit = defineEmits(['close', 'created'])
 const router = useRouter()
@@ -122,6 +131,7 @@ async function handleCreate() {
 </script>
 
 <style scoped>
+/* Gaming Style Modal */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -131,205 +141,161 @@ async function handleCreate() {
   justify-content: center;
   z-index: 1000;
   backdrop-filter: blur(8px);
+  padding: 20px;
 }
 
 .modal {
   background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  max-width: 400px;
-  width: 90%;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-xl);
+  max-width: 420px;
+  width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-lg);
+  animation: modalSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .modal-header {
-  padding: 20px;
-  border-bottom: 1px solid var(--border);
+  padding: 20px 24px;
+  border-bottom: 2px solid var(--border);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  background: var(--bg-input);
 }
 
 .header-icon {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--mario-red);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 3px 0 #a31b18;
 }
 
 .modal-header h2 {
   margin: 0;
   flex: 1;
   font-size: 1.2rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text);
 }
 
 .close {
-  background: var(--bg-card-light);
-  border: 1px solid var(--border);
+  background: var(--bg-card);
+  border: 2px solid var(--border);
   font-size: 1rem;
   cursor: pointer;
   padding: 0;
   color: var(--text-muted);
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  transition: all 0.2s;
+  border-radius: var(--radius-md);
+  transition: all 0.15s ease;
+  font-weight: 700;
 }
 
 .close:hover {
-  background: var(--error);
-  border-color: var(--error);
+  background: var(--option-red);
+  border-color: var(--option-red);
   color: white;
+  transform: scale(1.1);
 }
 
 .modal-body {
-  padding: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .form-group {
-  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  width: 100%;
-  padding: 12px 14px;
-  background: var(--bg-card-light);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  font-size: 0.95rem;
-  font-family: inherit;
-  color: var(--text);
-  transition: all 0.2s;
-}
-
-.form-group input::placeholder,
-.form-group textarea::placeholder {
-  color: var(--text-muted);
-  opacity: 0.6;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--glow-blue);
-}
-
-.form-group textarea {
-  resize: vertical;
-  min-height: 60px;
-}
-
-.hint {
-  display: block;
-  margin-top: 6px;
+.toggle-label {
   font-size: 0.75rem;
+  font-weight: 700;
   color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .toggle-group {
   display: flex;
-  gap: 8px;
+  gap: 12px;
 }
 
 .toggle-btn {
   flex: 1;
-  padding: 12px 16px;
-  background: var(--bg-card-light);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  padding: 14px 18px;
+  background: var(--bg-input);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .toggle-btn:hover {
-  background: var(--bg-card);
+  background: var(--bg-card-hover);
+  border-color: var(--border-light);
   color: var(--text);
+  transform: translateY(-2px);
 }
 
 .toggle-btn.active {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-  border-color: var(--primary);
+  background: var(--option-blue);
+  border-color: var(--option-blue);
   color: white;
+  box-shadow: 0 3px 0 #0e4fa3;
+}
+
+.toggle-btn.active:last-child {
+  background: var(--option-yellow);
+  border-color: var(--option-yellow);
+  box-shadow: 0 3px 0 #a67d00;
 }
 
 .error-message {
-  padding: 12px;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid var(--error);
-  border-radius: 8px;
-  color: var(--error);
-  font-size: 0.85rem;
-  margin-top: 12px;
+  padding: 14px 16px;
+  background: var(--option-red);
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-top: 16px;
+  box-shadow: 0 3px 0 #b01530;
 }
 
 .modal-footer {
-  padding: 16px 20px;
-  border-top: 1px solid var(--border);
+  padding: 18px 24px;
+  border-top: 2px solid var(--border);
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  background: var(--bg-card-light);
-  border-bottom-left-radius: 16px;
-  border-bottom-right-radius: 16px;
-}
-
-.btn-cancel,
-.btn-create {
-  padding: 12px 20px;
-  border: none;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-cancel {
-  background: var(--bg-card);
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-}
-
-.btn-cancel:hover {
-  background: var(--bg-card-light);
-  color: var(--text);
-  border-color: var(--text-muted);
-}
-
-.btn-create {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-  color: white;
-  min-width: 120px;
-  box-shadow: 0 4px 16px var(--glow-blue);
-}
-
-.btn-create:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px var(--glow-blue);
-}
-
-.btn-create:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
+  background: var(--bg-input);
 }
 </style>

@@ -1,103 +1,119 @@
 <template>
   <div class="game-arena">
-    <!-- Top Bar: Question Number, Timer, Score -->
-    <div class="top-bar">
-      <div class="question-section">
-        <span class="question-number">Soru {{ gameStore.currentQuestionIndex + 1 }}</span>
-        <span class="active-players">{{ activePlayersCount }} oyuncu kaldı</span>
-      </div>
+    <!-- Kahoot-Style Full Screen Layout -->
 
-      <div class="stats">
-        <span class="timer" :class="{ warning: timeLeft <= 10 }">
-          ⏱️ {{ timeLeft }}s
-        </span>
-        <span class="score">💯 {{ gameStore.myScore }}</span>
+    <!-- Waiting for Others Screen -->
+    <div v-if="waitingForOthers && !waitingForResults" class="fullscreen-state">
+      <div class="state-content">
+        <div class="state-icon-large">⏳</div>
+        <h1>Cevabın Alındı!</h1>
+        <p>Diğer oyuncular bekleniyor...</p>
+        <div class="mini-stats">
+          <span class="mini-stat">🎯 Soru {{ gameStore.currentQuestionIndex + 1 }}</span>
+          <span class="mini-stat">💯 {{ gameStore.myScore }} puan</span>
+        </div>
       </div>
     </div>
 
-    <!-- Main Game Area -->
-    <div class="game-container">
-      <!-- Waiting for Others Screen -->
-      <div v-if="waitingForOthers && !waitingForResults" class="state-card waiting">
-        <div class="state-icon">⏳</div>
-        <h2>Cevabın Alındı!</h2>
-        <p>Diğer oyuncular bekleniyor...</p>
-      </div>
+    <!-- Results Screen (After Everyone Answers) -->
+    <div v-else-if="waitingForResults && currentAnswer" class="fullscreen-state results-state">
+      <div class="state-content">
+        <div v-if="currentAnswer.isCorrect" class="result-icon correct">✅</div>
+        <div v-else class="result-icon wrong">❌</div>
 
-      <!-- Results Screen (After Everyone Answers) -->
-      <div v-else-if="waitingForResults && currentAnswer" class="state-card results">
-        <div class="results-header">
-          <div v-if="currentAnswer.isCorrect" class="result-badge correct">
-            <span class="badge-icon">✅</span>
-            <span class="badge-text">Doğru!</span>
-          </div>
-          <div v-else class="result-badge wrong">
-            <span class="badge-icon">❌</span>
-            <span class="badge-text">Yanlış!</span>
+        <h1 :class="currentAnswer.isCorrect ? 'text-correct' : 'text-wrong'">
+          {{ currentAnswer.isCorrect ? 'Doğru!' : 'Yanlış!' }}
+        </h1>
+
+        <div class="correct-answer-display">
+          <span class="answer-label">Doğru Cevap:</span>
+          <div class="answer-box">
+            <span class="answer-key-badge">{{ getCorrectOptionKey() }}</span>
+            <span class="answer-text-content" v-html="getCorrectOptionText()"></span>
           </div>
         </div>
 
-        <div class="correct-answer-box">
-          <div class="answer-label">Doğru Cevap:</div>
-          <div class="answer-content">
-            <span class="answer-key">{{ getCorrectOptionKey() }}</span>
-            <span class="answer-text" v-html="getCorrectOptionText()"></span>
-          </div>
+        <MarioCard v-if="currentAnswer.isEliminated" color="red" class="elimination-banner">
+          <span>Oyundan Elendin!</span>
+        </MarioCard>
+
+        <div v-if="currentAnswer.pointsEarned > 0" class="points-display">
+          +{{ currentAnswer.pointsEarned }} puan
         </div>
 
-        <div v-if="currentAnswer.isEliminated" class="elimination-alert">
-          <span class="alert-icon">⚠️</span>
-          <span class="alert-text">Oyundan Elendin!</span>
-        </div>
-
-        <div v-if="currentAnswer.pointsEarned > 0" class="points-earned">
-          +{{ currentAnswer.pointsEarned }} puan kazandın!
-        </div>
-
-        <div v-if="nextQuestionCountdown > 0" class="countdown">
-          Sonraki soru: {{ nextQuestionCountdown }}
+        <div v-if="nextQuestionCountdown > 0" class="next-countdown">
+          <div class="countdown-number">{{ nextQuestionCountdown }}</div>
+          <span>Sonraki soru</span>
         </div>
       </div>
+    </div>
 
-      <!-- Question Display (Active Question) -->
-      <div v-else-if="gameStore.currentQuestion" class="question-area">
-        <div class="question-card">
-          <!-- Question Text -->
-          <div class="question-header">
-            <div class="question-text" v-html="getSafeQuestionText()"></div>
-          </div>
+    <!-- Active Question - Kahoot Full Screen Layout -->
+    <div v-else-if="gameStore.currentQuestion" class="kahoot-layout">
+      <!-- Top Section: Timer + Question -->
+      <div class="top-section">
+        <!-- Timer Circle (Left) -->
+        <div class="timer-circle" :class="{ warning: timeLeft <= 10 }">
+          <span class="timer-value">{{ timeLeft }}</span>
+        </div>
 
+        <!-- Question Box (Center) -->
+        <div class="question-box">
+          <div class="question-text" v-html="getSafeQuestionText()"></div>
           <!-- Question Image (if exists) -->
-          <div v-if="gameStore.currentQuestion.imageUrl" class="question-image-container">
-            <img :src="gameStore.currentQuestion.imageUrl" alt="Question Image" class="question-image" />
-          </div>
+          <img
+            v-if="gameStore.currentQuestion.imageUrl"
+            :src="gameStore.currentQuestion.imageUrl"
+            alt="Question Image"
+            class="question-image"
+          />
+        </div>
 
-          <!-- Options -->
-          <div :class="getOptionsLayoutClass()">
-            <button
-              v-for="option in gameStore.currentQuestion.options"
-              :key="option.id"
-              @click="handleOptionClick(option.id)"
-              class="option-btn"
-              :class="{ selected: selectedOption === option.id }"
-              :disabled="waitingForOthers || waitingForResults || answerSubmitted"
-            >
-              <span class="option-key">{{ option.optionKey }}</span>
-              <span class="option-text" v-html="getSafeOptionText(option.text)"></span>
-            </button>
+        <!-- Stats (Right) -->
+        <div class="stats-column">
+          <div class="stat-badge question-badge">
+            <span class="stat-number">{{ gameStore.currentQuestionIndex + 1 }}</span>
+            <span class="stat-label">SORU</span>
           </div>
-
-          <!-- Submit Button -->
-          <div class="submit-section" v-if="!waitingForOthers && !waitingForResults && !answerSubmitted">
-            <button
-              class="btn-submit"
-              :disabled="!selectedOption"
-              @click="submitAnswer"
-            >
-              Cevabi Gonder
-            </button>
+          <div class="stat-badge score-badge">
+            <span class="stat-number">{{ gameStore.myScore }}</span>
+            <span class="stat-label">PUAN</span>
+          </div>
+          <div class="stat-badge players-badge">
+            <span class="stat-number">{{ activePlayersCount }}</span>
+            <span class="stat-label">OYUNCU</span>
           </div>
         </div>
+      </div>
+
+      <!-- Bottom Section: 2x2 Options Grid -->
+      <div class="options-section">
+        <div class="options-grid-2x2">
+          <button
+            v-for="(option, index) in gameStore.currentQuestion.options"
+            :key="option.id"
+            @click="handleOptionClick(option.id)"
+            class="kahoot-option"
+            :class="[
+              getOptionColorClass(index),
+              { selected: selectedOption === option.id }
+            ]"
+            :disabled="waitingForOthers || waitingForResults || answerSubmitted"
+          >
+            <span class="option-shape">{{ getOptionIcon(index) }}</span>
+            <span class="option-content" v-html="getSafeOptionText(option.text)"></span>
+          </button>
+        </div>
+
+        <!-- Submit Button (Floating) -->
+        <button
+          v-if="!waitingForOthers && !waitingForResults && !answerSubmitted && selectedOption"
+          class="floating-submit"
+          @click="submitAnswer"
+        >
+          <span>GÖNDER</span>
+          <span class="submit-arrow">→</span>
+        </button>
       </div>
     </div>
 
@@ -112,6 +128,8 @@ import { useRoomStore } from '../stores/room'
 import signalrService from '../services/signalrService'
 import api from '../services/api'
 import { sanitizeHtml } from '../utils/sanitize'
+import { playSelect, playCorrect, playWrong, playVictory, playFireball, preloadSounds } from '../services/soundService'
+import MarioCard from '../components/MarioCard.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -164,6 +182,9 @@ const sortedScoreboard = computed(() => {
 })
 
 onMounted(async () => {
+  // Preload sounds for better performance
+  preloadSounds()
+
   console.log('🎮 Game Mode: Survival (Elimination)')
   console.log('📊 GameStore state:', {
     gameSessionId: gameStore.gameSessionId,
@@ -287,6 +308,7 @@ function setupGameListeners() {
     console.log('🏁 GameFinished event received:', data)
     stopTimer()
     stopCountdown()
+    playVictory() // Mario powerup sound for game finish
     gameStore.setGameResults(data)
     router.push(`/game-result/${gameStore.gameSessionId}`)
   })
@@ -348,6 +370,15 @@ function showResultsAndMoveToNext(nextIndex) {
 
   // CRITICAL: Clear waitingForOthers first
   waitingForOthers.value = false
+
+  // NOW play the correct/wrong sound - this is when everyone has answered
+  if (currentAnswer.value) {
+    if (currentAnswer.value.isCorrect) {
+      playCorrect() // Mario coin sound for correct answer
+    } else {
+      playWrong() // Mario bump sound for wrong answer
+    }
+  }
 
   // For active players, show results screen and start countdown
   waitingForResults.value = true
@@ -438,6 +469,7 @@ function handleOptionClick(optionId) {
     return
   }
   selectedOption.value = optionId
+  playSelect() // Mario jump sound on selection
   console.log('🎯 Option selected:', optionId)
 }
 
@@ -473,6 +505,9 @@ async function submitAnswer() {
     console.log('📥 Received result:', result)
     currentAnswer.value = result
 
+    // Play neutral "pipe" sound - don't reveal correct/wrong yet!
+    playFireball() // Nötr ses - cevap alındı
+
     if (result.isEliminated) {
       console.log('💀 Player eliminated! Will redirect to spectator after results shown')
       isEliminated.value = true
@@ -504,6 +539,9 @@ async function autoSubmitOnTimeout() {
     const result = await gameStore.submitAnswer(selectedOption.value, timeSpent) // null olabilir
     console.log('📥 Timeout result:', result)
     currentAnswer.value = result
+
+    // Play neutral sound - don't reveal correct/wrong yet!
+    playFireball() // Nötr ses - süre doldu
 
     if (result.isEliminated) {
       isEliminated.value = true
@@ -541,569 +579,623 @@ function getSafeOptionText(text) {
   return sanitizeHtml(text || '')
 }
 
-function getOptionsLayoutClass() {
-  const layout = gameStore.currentQuestion?.optionsLayout || 'Vertical'
+// Kahoot-style option colors
+function getOptionColorClass(index) {
+  const colors = ['option-red', 'option-blue', 'option-yellow', 'option-green']
+  return colors[index % colors.length]
+}
 
-  switch (layout) {
-    case 'Grid':
-      return 'options-grid'
-    case 'Horizontal':
-      return 'options-horizontal'
-    case 'Vertical':
-    default:
-      return 'options-vertical'
-  }
+// Kahoot-style option icons
+function getOptionIcon(index) {
+  const icons = ['▲', '◆', '●', '■']
+  return icons[index % icons.length]
 }
 </script>
 
 <style scoped>
+/* ==========================================
+   GAME ARENA - WIDE HORIZONTAL LAYOUT
+   ========================================== */
+
 .game-arena {
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-width: 700px;
+  background: var(--bg-main);
+  overflow: hidden;
+  max-width: 1400px;
   margin: 0 auto;
-  min-height: calc(100vh - 100px);
+  padding: 12px;
 }
 
-/* Top Bar */
-.top-bar {
+/* ==========================================
+   FULLSCREEN STATE SCREENS - COMPACT
+   ========================================== */
+
+.fullscreen-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
   background: var(--bg-card);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+  margin-top: 12px;
 }
 
-.question-section {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.question-number {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.active-players {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--success);
-  padding: 4px 10px;
-  background: rgba(34, 197, 94, 0.15);
-  border-radius: 20px;
-}
-
-.stats {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-
-.timer {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--success);
-  font-variant-numeric: tabular-nums;
-  padding: 6px 12px;
-  background: rgba(34, 197, 94, 0.15);
-  border-radius: 8px;
-}
-
-.timer.warning {
-  color: var(--error);
-  background: rgba(239, 68, 68, 0.15);
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.score {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--primary-light);
-  padding: 6px 12px;
-  background: var(--bg-card-light);
-  border-radius: 8px;
-}
-
-/* Game Container */
-.game-container {
-  flex: 1;
-}
-
-/* State Cards (Waiting, Eliminated, Results) */
-.state-card {
+.fullscreen-state.results-state {
   background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 40px 24px;
+  border-radius: var(--radius-lg);
+}
+
+.state-content {
   text-align: center;
+  max-width: 320px;
+  animation: fadeInUp 0.3s ease;
 }
 
-.state-icon {
-  font-size: 3.5rem;
-  margin-bottom: 16px;
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.state-card h2 {
+.state-icon-large {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+  animation: bounce 1.5s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.state-content h1 {
   font-size: 1.4rem;
   font-weight: 700;
-  margin: 0 0 10px 0;
+  color: var(--text);
+  margin: 0 0 6px 0;
+}
+
+.state-content p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0 0 12px 0;
+}
+
+.mini-stats {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.mini-stat {
+  padding: 6px 12px;
+  background: var(--bg-input);
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 0.8rem;
   color: var(--text);
 }
 
-.state-card p {
-  font-size: 0.95rem;
-  color: var(--text-muted);
-  margin: 0 0 8px 0;
+/* Result Icons */
+.result-icon {
+  font-size: 3rem;
+  margin-bottom: 10px;
+  animation: resultPop 0.4s ease;
 }
 
-.state-card.waiting {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
-  border: 2px solid var(--primary);
+@keyframes resultPop {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 
-.state-card.results {
-  background: var(--bg-card);
+.result-icon.correct { filter: drop-shadow(0 0 15px rgba(16, 185, 129, 0.5)); }
+.result-icon.wrong { filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.5)); }
+
+.text-correct { color: #10b981 !important; }
+.text-wrong { color: #ef4444 !important; }
+
+/* Correct Answer Display */
+.correct-answer-display {
+  margin: 12px 0;
 }
 
-.sub-info {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  font-style: italic;
-}
-
-/* Results Screen */
-.results-header {
-  margin-bottom: 20px;
-}
-
-.result-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 24px;
-  border-radius: 30px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-
-.result-badge.correct {
-  background: rgba(34, 197, 94, 0.2);
-  color: var(--success);
-  border: 2px solid var(--success);
-}
-
-.result-badge.wrong {
-  background: rgba(239, 68, 68, 0.2);
-  color: var(--error);
-  border: 2px solid var(--error);
-}
-
-.badge-icon {
-  font-size: 1.3rem;
-}
-
-.correct-answer-box {
-  background: var(--bg-card-light);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  margin: 16px 0;
-}
-
-.answer-label {
-  font-size: 0.75rem;
+.correct-answer-display .answer-label {
+  font-size: 0.65rem;
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
+  display: block;
 }
 
-.answer-content {
+.answer-box {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: var(--bg-card);
-  border-radius: 10px;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #10b981;
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 0 #059669;
 }
 
-.answer-key {
+.answer-key-badge {
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: var(--success);
-  color: white;
-  border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 700;
+  color: white;
   flex-shrink: 0;
 }
 
-.answer-text {
+.answer-text-content {
   flex: 1;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: var(--text);
+  color: white;
   text-align: left;
 }
 
-.elimination-alert {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background: rgba(239, 68, 68, 0.15);
-  border: 2px solid var(--error);
-  border-radius: 10px;
-  padding: 14px;
-  margin: 16px 0;
+/* Elimination Banner */
+.elimination-banner {
+  text-align: center;
   font-size: 1rem;
   font-weight: 700;
-  color: var(--error);
+  margin: 10px 0;
+  animation: shake 0.4s ease;
 }
 
-.alert-icon {
-  font-size: 1.3rem;
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
 }
 
-.points-earned {
+/* Points Display */
+.points-display {
   font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--success);
-  margin: 16px 0;
+  font-weight: 800;
+  color: #10b981;
+  margin: 10px 0;
 }
 
-.countdown {
+/* Next Question Countdown */
+.next-countdown {
+  margin-top: 14px;
+}
+
+.countdown-number {
   font-size: 2rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, var(--primary-light) 0%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-top: 20px;
+  font-weight: 900;
+  color: var(--primary);
+  line-height: 1;
   animation: countdownPulse 1s infinite;
 }
 
 @keyframes countdownPulse {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
+  50% { transform: scale(1.1); }
 }
 
-/* Question Area */
-.question-area {
-  width: 100%;
+.next-countdown span {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 4px;
 }
 
-.question-card {
+/* ==========================================
+   KAHOOT LAYOUT - HORIZONTAL WIDE
+   ========================================== */
+
+.kahoot-layout {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* TOP SECTION - Horizontal Bar */
+.top-section {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: var(--radius-lg);
 }
 
-.question-header {
-  margin-bottom: 20px;
+/* Timer Circle - Small */
+.timer-circle {
+  width: 48px;
+  height: 48px;
+  background: #3b82f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 0 #2563eb;
+  flex-shrink: 0;
+}
+
+.timer-circle.warning {
+  background: #ef4444;
+  box-shadow: 0 2px 0 #dc2626;
+  animation: timerShake 0.3s infinite;
+}
+
+@keyframes timerShake {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+
+.timer-value {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: white;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Question Box - Wide Horizontal */
+.question-box {
+  flex: 1;
+  background: var(--bg-input);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
 }
 
 .question-text {
-  font-size: 1.15rem;
+  font-size: 1rem;
   font-weight: 600;
-  line-height: 1.6;
+  line-height: 1.4;
   color: var(--text);
-}
-
-.question-image-container {
-  margin: 16px 0;
   text-align: center;
 }
 
 .question-image {
-  max-width: 100%;
-  max-height: 220px;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  max-width: 120px;
+  max-height: 60px;
+  border-radius: 4px;
+  margin-left: 12px;
 }
 
-/* Options Layouts */
-.options-vertical {
+/* Stats Row - Horizontal Badges */
+.stats-column {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.stat-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+}
+
+.stat-badge .stat-number {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: white;
+}
+
+.stat-badge .stat-label {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.question-badge {
+  background: var(--mario-blue);
+  box-shadow: 0 2px 0 #037bb5;
+}
+
+.score-badge {
+  background: #f59e0b;
+  box-shadow: 0 2px 0 #d97706;
+}
+
+.players-badge {
+  background: #10b981;
+  box-shadow: 0 2px 0 #059669;
+}
+
+/* ==========================================
+   OPTIONS SECTION - COMPACT HORIZONTAL
+   ========================================== */
+
+.options-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
+  padding-bottom: 50px; /* Space for submit button */
 }
 
-.options-grid {
+/* 2x2 Grid */
+.options-grid-2x2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  grid-auto-rows: 1fr;
+  gap: 6px;
 }
 
-.options-horizontal {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 10px;
+/* Tüm seçenekler aynı yükseklikte */
+.options-grid-2x2 .kahoot-option {
+  min-height: 48px;
+  height: 100%;
 }
 
-.option-btn {
+/* Tek sayıda seçenek varsa son elemanı ortala */
+.options-grid-2x2 .kahoot-option:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  width: calc(50% - 3px);
+  justify-self: center;
+}
+
+/* Option Buttons - SLIM */
+.kahoot-option {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   padding: 14px 16px;
-  background: var(--bg-card-light);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  text-align: left;
-  font-size: 0.95rem;
-}
-
-.option-btn:hover:not(:disabled) {
-  background: rgba(59, 130, 246, 0.1);
-}
-
-.option-btn.selected {
-  background: rgba(59, 130, 246, 0.2);
-}
-
-.option-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.option-key {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: var(--primary);
-  border: none;
-  border-radius: 50%;
-  font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: white;
-  flex-shrink: 0;
+  transition: all 0.15s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.option-btn.selected .option-key {
-  background: var(--success);
+.kahoot-option.option-red {
+  background: #ef4444;
+  box-shadow: 0 3px 0 #dc2626;
 }
 
-.option-text {
-  flex: 1;
-  font-weight: 500;
-  font-size: 0.95rem;
-  color: var(--text);
+.kahoot-option.option-blue {
+  background: #3b82f6;
+  box-shadow: 0 3px 0 #2563eb;
 }
 
-/* Submit Button Section */
-.submit-section {
-  margin-top: 20px;
-  text-align: center;
+.kahoot-option.option-yellow {
+  background: #f59e0b;
+  box-shadow: 0 3px 0 #d97706;
 }
 
-.btn-submit {
-  width: 100%;
-  padding: 16px 24px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 4px 20px var(--glow-blue);
+.kahoot-option.option-green {
+  background: #10b981;
+  box-shadow: 0 3px 0 #059669;
 }
 
-.btn-submit:hover:not(:disabled) {
+.kahoot-option:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px var(--glow-blue);
+  filter: brightness(1.05);
 }
 
-.btn-submit:disabled {
-  background: var(--bg-card-light);
-  color: var(--text-muted);
-  cursor: not-allowed;
-  box-shadow: none;
+.kahoot-option:hover:not(:disabled).option-red { box-shadow: 0 5px 0 #dc2626; }
+.kahoot-option:hover:not(:disabled).option-blue { box-shadow: 0 5px 0 #2563eb; }
+.kahoot-option:hover:not(:disabled).option-yellow { box-shadow: 0 5px 0 #d97706; }
+.kahoot-option:hover:not(:disabled).option-green { box-shadow: 0 5px 0 #059669; }
+
+.kahoot-option:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
-/* Player Status Panel */
-.player-status-panel {
-  grid-column: 2 / 3;
-  grid-row: 1 / 3;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 24px;
-  height: fit-content;
-  position: sticky;
-  top: 20px;
+.kahoot-option:active:not(:disabled).option-red { box-shadow: 0 1px 0 #dc2626; }
+.kahoot-option:active:not(:disabled).option-blue { box-shadow: 0 1px 0 #2563eb; }
+.kahoot-option:active:not(:disabled).option-yellow { box-shadow: 0 1px 0 #d97706; }
+.kahoot-option:active:not(:disabled).option-green { box-shadow: 0 1px 0 #059669; }
+
+.kahoot-option.selected {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4) !important;
 }
 
-.player-status-panel h3 {
-  margin: 0 0 20px 0;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.player-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.player-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px;
-  background: var(--bg-card-light);
-  border-radius: 12px;
-  border: 2px solid transparent;
-  transition: all 0.2s;
-}
-
-.player-item.me {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: var(--primary);
-}
-
-.player-item.eliminated {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.3);
-}
-
-.player-avatar {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+.kahoot-option.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  background: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-weight: 700;
-  font-size: 1.1rem;
-  flex-shrink: 0;
-}
-
-.player-item.eliminated .player-avatar {
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-}
-
-.player-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  overflow: hidden;
-}
-
-.player-name {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.player-item.eliminated .player-name {
-  color: var(--text-muted);
-  text-decoration: line-through;
-}
-
-.player-status-badge {
   font-size: 0.75rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 10px;
-  width: fit-content;
+  color: var(--bg-main);
+  font-weight: 800;
+  animation: checkPop 0.25s ease;
 }
 
-.player-status-badge.status-active {
-  background: rgba(34, 197, 94, 0.2);
-  color: var(--success);
+@keyframes checkPop {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 
-.player-status-badge.status-eliminated {
-  background: rgba(239, 68, 68, 0.2);
-  color: var(--error);
+.kahoot-option:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
-.player-status-icon {
-  font-size: 1.5rem;
+.option-shape {
+  font-size: 1.1rem;
+  opacity: 0.9;
   flex-shrink: 0;
 }
 
-/* Responsive Design */
-@media (max-width: 1200px) {
-  .player-status-panel {
-    position: static;
+.option-content {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: left;
+}
+
+/* Floating Submit Button */
+.floating-submit {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 28px;
+  background: #10b981;
+  border: none;
+  border-radius: var(--radius-full);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #059669;
+  z-index: 100;
+  animation: submitAppear 0.25s ease;
+}
+
+@keyframes submitAppear {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.floating-submit:hover {
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 5px 0 #059669;
+}
+
+.floating-submit:active {
+  transform: translateX(-50%) translateY(1px);
+  box-shadow: 0 1px 0 #059669;
+}
+
+.submit-arrow {
+  font-size: 1rem;
+}
+
+/* ==========================================
+   RESPONSIVE DESIGN
+   ========================================== */
+
+@media (max-width: 800px) {
+  .game-arena {
+    padding: 8px;
   }
 
-  .top-bar {
+  .top-section {
     flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .question-box {
+    order: 3;
+    width: 100%;
+    min-height: 50px;
+  }
+
+  .timer-circle {
+    width: 42px;
+    height: 42px;
+  }
+
+  .timer-value {
+    font-size: 1rem;
+  }
+
+  .stats-column {
+    margin-left: auto;
+  }
+
+  .options-grid-2x2 {
+    gap: 6px;
+  }
+
+  .kahoot-option {
+    padding: 10px 12px;
   }
 }
 
-@media (max-width: 768px) {
-  .top-bar {
-    padding: 12px 16px;
-  }
-
-  .question-text {
-    font-size: 1.1rem;
-  }
-
-  .options-grid {
+@media (max-width: 500px) {
+  .options-grid-2x2 {
     grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, 1fr);
+    gap: 6px;
   }
 
-  .state-card {
-    padding: 30px 20px;
+  .kahoot-option {
+    padding: 10px 12px;
   }
 
-  .state-icon {
-    font-size: 3rem;
+  .option-shape {
+    font-size: 1rem;
   }
 
-  .state-card h2 {
-    font-size: 1.3rem;
+  .option-content {
+    font-size: 0.8rem;
+  }
+
+  .floating-submit {
+    bottom: 8px;
+    padding: 8px 24px;
+    font-size: 0.85rem;
+  }
+
+  .state-content h1 {
+    font-size: 1.2rem;
+  }
+
+  .state-icon-large {
+    font-size: 2rem;
+  }
+
+  .result-icon {
+    font-size: 2.5rem;
+  }
+
+  .countdown-number {
+    font-size: 1.6rem;
   }
 }
 
-/* Support for HTML content (from Quill editor) */
+/* ==========================================
+   HTML CONTENT SUPPORT (Quill editor)
+   ========================================== */
+
 :deep(img) {
   max-width: 100%;
   height: auto;
-  border-radius: 8px;
-  margin: 0.5rem 0;
+  border-radius: 4px;
+  margin: 0.3rem 0;
 }
 
 :deep(p) {
   margin: 0;
-  line-height: 1.6;
+  line-height: 1.4;
 }
 
 :deep(ul), :deep(ol) {
-  margin: 0.5rem 0;
-  padding-left: 1.5rem;
+  margin: 0.3rem 0;
+  padding-left: 1rem;
 }
 </style>

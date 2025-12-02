@@ -1,66 +1,121 @@
 <template>
   <div class="login-page">
-    <div class="login-card">
-      <div class="logo">
-        <span class="logo-icon">🎮</span>
-        <h1>Tiroksin</h1>
-        <p>Bilgi Yarismasina Hosgeldin!</p>
-      </div>
+    <!-- Left Side: Branding / Hero -->
+    <div class="hero-side">
+      <div class="hero-content">
+        <div class="hero-icon">🎮</div>
+        <h1 class="hero-title">Tiroksin</h1>
+        <p class="hero-subtitle">Bilgi Yarışması Platformu</p>
 
-      <div class="tabs">
-        <button :class="{ active: mode === 'login' }" @click="mode = 'login'">Giris</button>
-        <button :class="{ active: mode === 'register' }" @click="mode = 'register'">Kayit</button>
-      </div>
-
-      <form @submit.prevent="handleSubmit">
-        <div class="input-group">
-          <label>Kullanici Adi</label>
-          <input v-model="username" type="text" placeholder="kullanici_adi" required />
+        <div class="hero-features">
+          <div class="feature-item">
+            <span class="feature-icon">⚡</span>
+            <span>Gerçek zamanlı yarışmalar</span>
+          </div>
+          <div class="feature-item">
+            <span class="feature-icon">🏆</span>
+            <span>Eleme modu ile rekabet</span>
+          </div>
+          <div class="feature-item">
+            <span class="feature-icon">👥</span>
+            <span>Arkadaşlarınla yarış</span>
+          </div>
         </div>
 
-        <div class="input-group">
-          <label>Sifre</label>
-          <input v-model="password" type="password" placeholder="******" required minlength="6" />
+        <!-- Mario-style decorative blocks -->
+        <div class="deco-blocks">
+          <div class="block block-1">?</div>
+          <div class="block block-2">?</div>
+          <div class="block block-3">!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Side: Form -->
+    <div class="form-side">
+      <div class="form-container">
+        <div class="tabs">
+          <button :class="{ active: mode === 'login' }" @click="mode = 'login'">Giriş</button>
+          <button :class="{ active: mode === 'register' }" @click="mode = 'register'">Kayıt</button>
         </div>
 
-        <template v-if="mode === 'register'">
-          <div class="input-group">
-            <label>Isim</label>
-            <input v-model="displayName" type="text" placeholder="Adiniz" required />
-          </div>
-          <div class="input-group">
-            <label>Email</label>
-            <input v-model="email" type="email" placeholder="email@example.com" required />
-          </div>
-          <div class="input-group">
-            <label>Tema Secimi</label>
-            <div class="theme-selector">
-              <button
-                type="button"
-                :class="['theme-btn', { active: selectedTheme === 'dark' }]"
-                @click="selectedTheme = 'dark'"
-              >
-                <span class="theme-icon">🌙</span>
-                <span class="theme-name">Koyu</span>
-              </button>
-              <button
-                type="button"
-                :class="['theme-btn', { active: selectedTheme === 'light' }]"
-                @click="selectedTheme = 'light'"
-              >
-                <span class="theme-icon">☀️</span>
-                <span class="theme-name">Acik</span>
-              </button>
+        <form @submit.prevent="handleSubmit">
+          <MarioInput
+            v-model="username"
+            label="Kullanıcı Adı"
+            placeholder="kullanici_adi"
+            prefix="👤"
+            @enter="handleSubmit"
+          />
+
+          <MarioInput
+            v-model="password"
+            type="password"
+            label="Şifre"
+            placeholder="******"
+            prefix="🔒"
+          />
+
+          <template v-if="mode === 'register'">
+            <MarioInput
+              v-model="displayName"
+              label="İsim"
+              placeholder="Adınız"
+              prefix="✨"
+            />
+
+            <MarioInput
+              v-model="email"
+              type="email"
+              label="Email"
+              placeholder="email@example.com"
+              prefix="📧"
+            />
+
+            <div class="input-group">
+              <label class="theme-label">Tema Seçimi</label>
+              <div class="theme-selector">
+                <MarioButton
+                  type="button"
+                  :color="selectedTheme === 'dark' ? 'blue' : 'gray'"
+                  size="sm"
+                  @click="selectedTheme = 'dark'"
+                >
+                  <template #icon>🌙</template>
+                  Koyu
+                </MarioButton>
+                <MarioButton
+                  type="button"
+                  :color="selectedTheme === 'light' ? 'orange' : 'gray'"
+                  size="sm"
+                  @click="selectedTheme = 'light'"
+                >
+                  <template #icon>☀️</template>
+                  Açık
+                </MarioButton>
+              </div>
             </div>
-          </div>
-        </template>
+          </template>
 
-        <p v-if="error" class="error">{{ error }}</p>
+          <p v-if="error" class="error">{{ error }}</p>
 
-        <button type="submit" class="btn-submit" :disabled="loading">
-          {{ loading ? 'Yukleniyor...' : (mode === 'login' ? 'Giris Yap' : 'Kayit Ol') }}
-        </button>
-      </form>
+          <MarioButton
+            type="submit"
+            color="green"
+            block
+            :loading="loading"
+            class="submit-btn"
+          >
+            {{ mode === 'login' ? 'Giriş Yap' : 'Kayıt Ol' }}
+          </MarioButton>
+        </form>
+
+        <!-- Mobile Logo (hidden on desktop) -->
+        <div class="mobile-branding">
+          <span class="mobile-icon">🎮</span>
+          <span class="mobile-title">Tiroksin</span>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -70,6 +125,8 @@ import { ref, watch } from 'vue'
 import { useUsersStore } from '../stores/users'
 import { useThemeStore } from '../stores/theme'
 import { useRouter } from 'vue-router'
+import MarioInput from './MarioInput.vue'
+import MarioButton from './MarioButton.vue'
 
 const usersStore = useUsersStore()
 const themeStore = useThemeStore()
@@ -108,7 +165,7 @@ const handleSubmit = async () => {
       router.push('/')
     } else {
       if (!displayName.value || !email.value) {
-        error.value = 'Tum alanlari doldurun'
+        error.value = 'Tüm alanları doldurun'
         loading.value = false
         return
       }
@@ -130,196 +187,302 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped>
+/* ==========================================
+   SPLIT LAYOUT LOGIN PAGE - COMPACT
+   ========================================== */
+
 .login-page {
   min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  background: var(--bg-main);
+}
+
+/* ==========================================
+   LEFT SIDE: HERO / BRANDING - COMPACT
+   ========================================== */
+
+.hero-side {
+  background: var(--mario-red);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-gradient);
-  padding: 20px;
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
 }
 
-.login-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 40px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+.hero-side::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0%, transparent 50%);
+  pointer-events: none;
 }
 
-.logo {
+.hero-content {
+  position: relative;
+  z-index: 1;
   text-align: center;
-  margin-bottom: 32px;
+  color: white;
+  max-width: 320px;
 }
 
-.logo-icon {
+.hero-icon {
   font-size: 3rem;
-  display: block;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  display: inline-block;
+  animation: heroFloat 3s ease-in-out infinite;
 }
 
-.logo h1 {
-  font-size: 2rem;
+@keyframes heroFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.hero-title {
+  font-size: 2.5rem;
   font-weight: 800;
-  background: linear-gradient(135deg, var(--primary-light) 0%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
   margin: 0 0 8px 0;
+  letter-spacing: -1px;
 }
 
-.logo p {
-  color: var(--text-muted);
+.hero-subtitle {
   font-size: 0.95rem;
-  margin: 0;
+  opacity: 0.9;
+  margin: 0 0 28px 0;
+  font-weight: 500;
 }
 
+/* Features List - Compact */
+.hero-features {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.feature-icon {
+  font-size: 1.1rem;
+}
+
+/* Mario-style Decorative Blocks - Smaller */
+.deco-blocks {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  opacity: 0.7;
+}
+
+.block {
+  width: 32px;
+  height: 32px;
+  background: #fbbf24;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #92400e;
+  box-shadow: 0 2px 0 #d97706;
+  animation: blockBounce 2s ease-in-out infinite;
+}
+
+.block-1 { animation-delay: 0s; }
+.block-2 { animation-delay: 0.2s; }
+.block-3 {
+  animation-delay: 0.4s;
+  background: #f472b6;
+  box-shadow: 0 2px 0 #db2777;
+  color: white;
+}
+
+@keyframes blockBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* ==========================================
+   RIGHT SIDE: FORM - COMPACT
+   ========================================== */
+
+.form-side {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background: var(--bg-card);
+}
+
+.form-container {
+  width: 100%;
+  max-width: 340px;
+}
+
+/* Tabs - Compact */
 .tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 28px;
-  background: var(--bg-card-light);
-  padding: 6px;
-  border-radius: 12px;
+  gap: 4px;
+  margin-bottom: 24px;
+  background: var(--bg-input);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
 }
 
 .tabs button {
   flex: 1;
-  padding: 12px;
+  padding: 10px;
   border: none;
   background: transparent;
   color: var(--text-muted);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .tabs button.active {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  background: #10b981;
   color: white;
-  box-shadow: 0 4px 16px var(--glow-blue);
+  box-shadow: 0 2px 0 #059669;
 }
 
 .tabs button:not(.active):hover {
   color: var(--text);
+  background: var(--bg-card-hover);
 }
 
+/* Form - Compact */
 form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
 }
 
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
-.input-group label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.input-group input {
-  padding: 14px 16px;
-  background: var(--bg-card-light);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  font-size: 1rem;
-  color: var(--text);
-  transition: all 0.2s;
-}
-
-.input-group input::placeholder {
-  color: var(--text-muted);
-  opacity: 0.6;
-}
-
-.input-group input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--glow-blue);
-}
-
-.error {
-  color: var(--error);
-  font-size: 0.9rem;
-  text-align: center;
-  padding: 10px;
-  background: rgba(239, 68, 68, 0.1);
-  border-radius: 8px;
-  margin: 0;
-}
-
-.btn-submit {
-  padding: 16px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-  border: none;
-  border-radius: 12px;
-  color: white;
-  font-size: 1rem;
+.theme-label {
+  font-size: 0.75rem;
   font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 4px 20px var(--glow-blue);
+  color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
 }
 
-.btn-submit:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px var(--glow-blue);
+.submit-btn {
+  margin-top: 8px;
 }
 
-.btn-submit:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+/* Error Message - Compact */
+.error {
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 10px 14px;
+  background: #ef4444;
+  border-radius: var(--radius-md);
+  margin: 0;
+  box-shadow: 0 2px 0 #dc2626;
 }
+
 
 /* Theme Selector */
 .theme-selector {
   display: flex;
-  gap: 10px;
-}
-
-.theme-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 8px;
-  padding: 16px 12px;
-  background: var(--bg-card-light);
-  border: 2px solid var(--border);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
 }
 
-.theme-btn:hover {
-  border-color: var(--primary);
-  background: rgba(59, 130, 246, 0.1);
+.theme-selector > * {
+  flex: 1;
 }
 
-.theme-btn.active {
-  border-color: var(--primary);
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%);
-  box-shadow: 0 0 0 3px var(--glow-blue);
+/* Mobile Branding (hidden on desktop) - Compact */
+.mobile-branding {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
 }
 
-.theme-icon {
-  font-size: 1.8rem;
+.mobile-icon {
+  font-size: 1.5rem;
 }
 
-.theme-name {
-  font-size: 0.9rem;
-  font-weight: 600;
+.mobile-title {
+  font-size: 1.2rem;
+  font-weight: 800;
   color: var(--text);
+}
+
+/* ==========================================
+   RESPONSIVE DESIGN
+   ========================================== */
+
+@media (max-width: 900px) {
+  .login-page {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+  }
+
+  .hero-side {
+    display: none;
+  }
+
+  .form-side {
+    padding: 24px 20px;
+  }
+
+  .mobile-branding {
+    display: flex;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-container {
+    max-width: none;
+  }
+
+  .tabs button {
+    padding: 8px;
+    font-size: 0.85rem;
+  }
+
+  .input-group input {
+    padding: 10px 12px;
+  }
+
+  .btn-submit {
+    padding: 12px;
+    font-size: 0.9rem;
+  }
 }
 </style>

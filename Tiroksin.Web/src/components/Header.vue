@@ -1,32 +1,58 @@
 <template>
   <header class="header">
     <div class="header-inner">
+      <!-- Logo - Mario Style -->
       <router-link to="/" class="logo">
-        <span class="logo-icon">🎮</span>
+        <div class="logo-icon-wrapper">
+          <span class="logo-icon">🍄</span>
+        </div>
         <span class="logo-text">Tiroksin</span>
+        <div class="logo-deco">
+          <span class="logo-star">⭐</span>
+        </div>
       </router-link>
 
+      <!-- Actions -->
       <div class="header-actions">
-        <router-link to="/create-question" class="btn-add">
-          <span>+</span> Soru Ekle
-        </router-link>
+        <!-- Add Question Button -->
+        <MarioButton to="/create-question" color="green" size="sm">
+          <template #icon>+</template>
+          <span class="btn-text">Soru Ekle</span>
+        </MarioButton>
 
-        <button @click="toggleTheme" class="theme-toggle" :title="themeStore.theme === 'dark' ? 'Acik temaya gec' : 'Koyu temaya gec'">
-          {{ themeStore.theme === 'dark' ? '☀️' : '🌙' }}
-        </button>
+        <!-- Theme Toggle -->
+        <MarioButton
+          color="blue"
+          size="sm"
+          iconOnly
+          :icon="themeStore.theme === 'dark' ? '☀️' : '🌙'"
+          @click="toggleTheme"
+        />
 
-        <div class="profile" @click="toggleMenu">
-          <span class="avatar">{{ userAvatar }}</span>
-          <span class="username">{{ userName }}</span>
-          <svg class="chevron" :class="{ open: showMenu }" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
-          </svg>
-        </div>
+        <!-- Profile -->
+        <div class="profile-wrapper">
+          <MarioButton color="orange" size="sm" @click="toggleMenu">
+            <template #icon>{{ userAvatar }}</template>
+            <span class="btn-text">{{ userName }}</span>
+          </MarioButton>
 
-        <div v-if="showMenu" class="dropdown">
-          <button @click="logout" class="dropdown-item logout">
-            Cikis Yap
-          </button>
+          <!-- Dropdown Menu -->
+          <Transition name="dropdown">
+            <div v-if="showMenu" class="dropdown">
+              <div class="dropdown-header">
+                <span class="dropdown-avatar">{{ userAvatar }}</span>
+                <div class="dropdown-info">
+                  <span class="dropdown-name">{{ userName }}</span>
+                  <span class="dropdown-role">Oyuncu</span>
+                </div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <MarioButton color="red" size="sm" block @click="logout">
+                <template #icon>🚪</template>
+                Çıkış Yap
+              </MarioButton>
+            </div>
+          </Transition>
         </div>
       </div>
     </div>
@@ -38,6 +64,7 @@ import { ref, computed } from 'vue'
 import { useUsersStore } from '../stores/users'
 import { useThemeStore } from '../stores/theme'
 import { useRouter } from 'vue-router'
+import MarioButton from './MarioButton.vue'
 
 const usersStore = useUsersStore()
 const themeStore = useThemeStore()
@@ -48,6 +75,7 @@ const userName = computed(() => usersStore.currentUser?.displayName || usersStor
 const userAvatar = computed(() => usersStore.currentUser?.avatar || '🎯')
 
 const toggleMenu = () => showMenu.value = !showMenu.value
+
 const toggleTheme = async () => {
   try {
     await themeStore.toggleTheme()
@@ -64,7 +92,7 @@ const logout = () => {
 
 if (typeof window !== 'undefined') {
   window.addEventListener('click', (e) => {
-    if (!e.target.closest('.profile') && !e.target.closest('.dropdown')) {
+    if (!e.target.closest('.profile-wrapper')) {
       showMenu.value = false
     }
   })
@@ -73,7 +101,8 @@ if (typeof window !== 'undefined') {
 
 <style scoped>
 .header {
-  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-light) 100%);
+  background: var(--bg-header);
+  backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
@@ -81,169 +110,168 @@ if (typeof window !== 'undefined') {
 }
 
 .header-inner {
-  max-width: 1100px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 12px 24px;
+  padding: 12px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
+/* Logo */
 .logo {
   display: flex;
   align-items: center;
   gap: 10px;
   text-decoration: none;
-  color: var(--text);
+  transition: transform 0.2s ease;
 }
 
-.logo-icon {
-  font-size: 1.8rem;
+.logo:hover {
+  transform: scale(1.02);
 }
 
-.logo-text {
-  font-size: 1.4rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, var(--primary-light) 0%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  position: relative;
-}
-
-.btn-add {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: var(--bg-card-light);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  color: var(--text);
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all 0.2s;
-}
-
-.btn-add:hover {
-  background: var(--primary);
-  border-color: var(--primary);
-}
-
-.btn-add span {
-  font-size: 1.1rem;
-  color: var(--accent);
-}
-
-.btn-add:hover span {
-  color: white;
-}
-
-.theme-toggle {
+.logo-icon-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 40px;
   height: 40px;
-  background: var(--bg-card-light);
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 1.2rem;
-  transition: all 0.2s;
+  background: var(--mario-red);
+  border-radius: var(--radius-md);
+  box-shadow: 0 3px 0 #a31b18;
+  transition: all 0.15s ease;
 }
 
-.theme-toggle:hover {
-  background: var(--primary);
-  border-color: var(--primary);
-  transform: rotate(15deg);
+.logo:hover .logo-icon-wrapper {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 #a31b18;
 }
 
-.profile {
+.logo-icon {
+  font-size: 1.3rem;
+  animation: marioBlockBounce 2s ease-in-out infinite;
+}
+
+.logo-text {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+
+.logo-deco {
+  display: flex;
+  align-items: center;
+}
+
+.logo-star {
+  font-size: 0.9rem;
+  animation: starPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes marioBlockBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes starPulse {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.15) rotate(10deg); }
+}
+
+/* Header Actions */
+.header-actions {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 12px;
-  background: var(--bg-card-light);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.2s;
 }
 
-.profile:hover {
-  border-color: var(--primary);
+
+/* Profile */
+.profile-wrapper {
+  position: relative;
 }
 
-.avatar {
+/* Dropdown */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  z-index: 200;
+}
+
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.dropdown-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: var(--mario-red);
+  border-radius: var(--radius-md);
   font-size: 1.4rem;
 }
 
-.username {
-  font-weight: 600;
-  font-size: 0.9rem;
+.dropdown-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dropdown-name {
+  font-weight: 700;
+  font-size: 0.95rem;
   color: var(--text);
 }
 
-.chevron {
-  width: 16px;
-  height: 16px;
+.dropdown-role {
+  font-size: 0.8rem;
   color: var(--text-muted);
-  transition: transform 0.2s;
 }
 
-.chevron.open {
-  transform: rotate(180deg);
+.dropdown-divider {
+  height: 1px;
+  background: var(--border);
 }
 
-.dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 8px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-  min-width: 160px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+.dropdown :deep(.mario-button) {
+  margin: 12px;
+  width: calc(100% - 24px);
 }
 
-.dropdown-item {
-  display: block;
-  width: 100%;
-  padding: 12px 16px;
-  background: none;
-  border: none;
-  text-align: left;
-  color: var(--text);
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background 0.2s;
+/* Dropdown Animation */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.2s ease;
 }
 
-.dropdown-item:hover {
-  background: var(--bg-card-light);
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
 }
 
-.dropdown-item.logout {
-  color: var(--error);
-}
-
+/* Responsive */
 @media (max-width: 600px) {
-  .username {
-    display: none;
+  .header-inner {
+    padding: 10px 16px;
   }
 
-  .btn-add {
-    padding: 8px 12px;
+  .btn-text {
+    display: none;
   }
 }
 </style>

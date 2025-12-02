@@ -1,188 +1,204 @@
 <template>
   <div class="create-question">
-    <div class="question-form-container">
-      <!-- Önizleme Formatında Soru -->
-      <div class="form-card">
+    <div class="form-container">
+      <!-- Header -->
+      <div class="form-header">
+        <div class="header-icon">📝</div>
         <h1 class="form-title">Yeni Soru Ekle</h1>
+      </div>
 
-        <!-- Header - Soru Kategorileri -->
-        <div class="category-grid">
-            <div>
-              <label class="form-label">Ders</label>
-              <select
-                v-model="form.subjectId"
-                @change="onSubjectChange"
-                class="form-select">
-                <option value="">-- Ders Seçin --</option>
-                <option v-for="subject in subjects" :key="subject.id" :value="subject.id">{{ subject.name }}</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label">Konu</label>
-              <select
-                v-model="form.topicId"
-                :disabled="!form.subjectId"
-                class="form-select"
-                :class="{ disabled: !form.subjectId }">
-                <option value="">-- Konu Seçin --</option>
-                <option v-for="topic in filteredTopics" :key="topic.id" :value="topic.id">{{ topic.name }}</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label">Sınav Tipi</label>
-              <select
-                v-model="form.examType"
-                class="form-select">
-                <option value="">-- Sınav Tipi Seçin --</option>
-                <option value="YksTyt">YKS - TYT</option>
-                <option value="YksAyt">YKS - AYT</option>
-                <option value="Lgs">LGS</option>
-                <option value="Kpss">KPSS</option>
-                <option value="Ales">ALES</option>
-                <option value="Dgs">DGS</option>
-                <option value="Custom">Özel/Diğer</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label">Zorluk</label>
-              <select
-                v-model="form.difficulty"
-                class="form-select">
-                <option value="Easy">Kolay</option>
-                <option value="Medium">Orta</option>
-                <option value="Hard">Zor</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Soru -->
-          <div class="question-section">
-            <div
-              @click="openQuestionEditor"
-              class="question-preview"
-              :class="{ 'question-preview--empty': !hasTextContent(form.text) }"
+      <!-- Form Card -->
+      <div class="form-card">
+        <!-- Kategori Secimi -->
+        <div class="form-section">
+          <div class="category-grid">
+            <MarioSelect
+              v-model="form.subjectId"
+              label="Ders"
+              @change="onSubjectChange"
             >
-              <span class="question-number">1</span>
+              <option value="">-- Ders Seçin --</option>
+              <option v-for="subject in subjects" :key="subject.id" :value="subject.id">
+                {{ subject.name }}
+              </option>
+            </MarioSelect>
+
+            <MarioSelect
+              v-model="form.topicId"
+              label="Konu"
+              :disabled="!form.subjectId"
+            >
+              <option value="">-- Konu Seçin --</option>
+              <option v-for="topic in filteredTopics" :key="topic.id" :value="topic.id">
+                {{ topic.name }}
+              </option>
+            </MarioSelect>
+
+            <MarioSelect
+              v-model="form.examType"
+              label="Sınav Tipi"
+            >
+              <option value="">-- Sınav Tipi --</option>
+              <option value="YksTyt">YKS - TYT</option>
+              <option value="YksAyt">YKS - AYT</option>
+              <option value="Lgs">LGS</option>
+              <option value="Kpss">KPSS</option>
+              <option value="Ales">ALES</option>
+              <option value="Dgs">DGS</option>
+              <option value="Custom">Özel/Diğer</option>
+            </MarioSelect>
+
+            <MarioSelect
+              v-model="form.difficulty"
+              label="Zorluk"
+            >
+              <option value="Easy">Kolay</option>
+              <option value="Medium">Orta</option>
+              <option value="Hard">Zor</option>
+            </MarioSelect>
+          </div>
+        </div>
+
+        <!-- Soru Alani -->
+        <div class="form-section">
+          <label class="section-label">Soru</label>
+          <div
+            class="question-box"
+            :class="{ 'question-box--filled': hasTextContent(form.text) }"
+            @click="openQuestionEditor"
+          >
+            <span class="question-number">1</span>
+            <div class="question-content">
               <div v-if="hasTextContent(form.text)" v-html="form.text" class="question-text"></div>
-              <div v-else class="question-placeholder">Sorunuzu girin...</div>
-              <div class="edit-icon">✏️</div>
+              <span v-else class="placeholder">Soruyu yazmak için tıklayın...</span>
             </div>
+            <span class="edit-icon">✏️</span>
           </div>
+        </div>
 
-          <!-- Layout Seçici İkonlar -->
-          <div class="layout-selector">
-            <button
+        <!-- Layout Secici -->
+        <div class="form-section">
+          <label class="section-label">Şık Düzeni</label>
+          <div class="layout-buttons">
+            <MarioButton
+              :color="form.optionsLayout === 'Vertical' ? 'blue' : 'gray'"
+              size="sm"
               @click="form.optionsLayout = 'Vertical'"
-              class="layout-btn"
-              :class="{ 'layout-btn--active': form.optionsLayout === 'Vertical' }"
-              title="Dikey"
             >
-              ☰
-            </button>
-            <button
+              <template #icon>☰</template>
+              Dikey
+            </MarioButton>
+            <MarioButton
+              :color="form.optionsLayout === 'Grid' ? 'blue' : 'gray'"
+              size="sm"
               @click="form.optionsLayout = 'Grid'"
-              class="layout-btn"
-              :class="{ 'layout-btn--active': form.optionsLayout === 'Grid' }"
-              title="Grid"
             >
-              ⊞
-            </button>
-            <button
+              <template #icon>⊞</template>
+              Grid
+            </MarioButton>
+            <MarioButton
+              :color="form.optionsLayout === 'Horizontal' ? 'blue' : 'gray'"
+              size="sm"
               @click="form.optionsLayout = 'Horizontal'"
-              class="layout-btn"
-              :class="{ 'layout-btn--active': form.optionsLayout === 'Horizontal' }"
-              title="Yatay"
             >
-              ▭▭▭▭▭
-            </button>
+              <template #icon>═</template>
+              Yatay
+            </MarioButton>
           </div>
+        </div>
 
-          <!-- Cevaplar -->
+        <!-- Secenekler -->
+        <div class="form-section">
+          <label class="section-label">Şıklar <span class="hint">(Doğru cevabı seçmek için harfe tıklayın)</span></label>
           <div :class="getLayoutClass(form.optionsLayout)">
             <div
               v-for="(option, index) in form.options"
               :key="index"
               class="option-item"
-              :class="{ 'option-item--empty': !hasTextContent(option.text) }"
+              :class="{
+                'option-item--correct': option.isCorrect,
+                'option-item--filled': hasTextContent(option.text)
+              }"
             >
-              <input
-                type="radio"
-                :name="`question-preview`"
-                :checked="option.isCorrect"
+              <button
+                type="button"
+                class="option-letter-btn"
+                :class="{ 'option-letter-btn--selected': option.isCorrect }"
                 @click="setCorrectAnswer(index)"
-                class="option-radio"
-              />
-              <div
-                @click="openOptionEditor(index)"
-                class="option-content"
+                :title="option.isCorrect ? 'Doğru cevap' : 'Doğru cevap olarak işaretle'"
               >
-                <div class="option-text-wrapper">
-                  <span class="option-letter">{{ String.fromCharCode(65 + index) }})</span>
-                  <span v-if="hasTextContent(option.text)" v-html="option.text"></span>
-                  <span v-else class="option-placeholder">Cevabı girin...</span>
-                </div>
+                {{ String.fromCharCode(65 + index) }}
+              </button>
+              <div class="option-content" @click="openOptionEditor(index)">
+                <span v-if="hasTextContent(option.text)" v-html="option.text" class="option-text"></span>
+                <span v-else class="placeholder">Şık {{ String.fromCharCode(65 + index) }}...</span>
               </div>
-              <div
-                @click="openOptionEditor(index)"
-                class="edit-icon edit-icon--small"
-              >
+              <button class="edit-icon-btn" @click="openOptionEditor(index)" title="Düzenle">
                 ✏️
-              </div>
+              </button>
             </div>
           </div>
-
-        <!-- Uyarı -->
-        <div v-if="!hasCorrectAnswer && form.options.some(opt => hasTextContent(opt.text))" class="warning-box">
-          <p class="warning-text">
-            ⚠️ En az bir doğru cevap işaretlemelisiniz
-          </p>
         </div>
 
-        <!-- Kaydet Butonu -->
-        <div class="action-buttons">
-          <button @click="router.back()" class="btn-cancel">
+        <!-- Uyari -->
+        <div v-if="showWarning" class="warning-box">
+          <span class="warning-icon">⚠️</span>
+          <span>{{ warningMessage }}</span>
+        </div>
+
+        <!-- Butonlar -->
+        <div class="form-actions">
+          <MarioButton color="gray" @click="router.back()">
             İptal
-          </button>
-          <button
-            @click="handleSubmit"
+          </MarioButton>
+          <MarioButton
+            color="green"
             :disabled="!canSubmit || loading"
-            class="btn-submit"
-            :class="{ 'btn-submit--disabled': !canSubmit || loading }"
+            :loading="loading"
+            @click="handleSubmit"
           >
-            {{ loading ? 'Gönderiliyor...' : 'Onaya Gönder' }}
-          </button>
+            <template #icon>✓</template>
+            Onaya Gönder
+          </MarioButton>
         </div>
       </div>
     </div>
 
-    <!-- MODAL: Soru/Cevap Editörü -->
-    <div
-      v-if="showEditorModal"
-      @click="closeEditorModal"
-      class="modal-overlay"
-    >
-      <div @click.stop class="modal-content">
-        <h2 class="form-title">{{ editorTitle }}</h2>
+    <!-- Editor Modal -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showEditorModal" class="modal-overlay" @click="closeEditorModal">
+          <div class="modal-card" @click.stop>
+            <div class="modal-header">
+              <div class="modal-icon">{{ editorType === 'question' ? '❓' : '✍️' }}</div>
+              <h2 class="modal-title">{{ editorTitle }}</h2>
+              <button class="modal-close" @click="closeEditorModal">✕</button>
+            </div>
 
-        <QuillEditor
-          v-model:content="editorContent"
-          contentType="html"
-          theme="snow"
-          :toolbar="editorToolbar"
-          placeholder="Metninizi buraya yazın... Resim eklemek için toolbar'daki resim ikonuna tıklayın."
-          class="quill-editor"
-        />
+            <div class="modal-body">
+              <QuillEditor
+                v-model:content="editorContent"
+                contentType="html"
+                theme="snow"
+                :toolbar="editorToolbar"
+                placeholder="Metninizi buraya yazın..."
+                class="quill-editor"
+              />
+            </div>
 
-        <div class="modal-actions">
-          <button @click="closeEditorModal" class="btn-cancel">
-            İptal
-          </button>
-          <button @click="saveEditorContent" class="btn-submit">
-            Kaydet
-          </button>
+            <div class="modal-footer">
+              <MarioButton color="gray" @click="closeEditorModal">
+                İptal
+              </MarioButton>
+              <MarioButton color="green" @click="saveEditorContent">
+                <template #icon>✓</template>
+                Kaydet
+              </MarioButton>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -192,16 +208,16 @@ import { useRouter } from 'vue-router'
 import api from '../services/api'
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
+import MarioButton from '../components/MarioButton.vue'
+import MarioSelect from '../components/MarioSelect.vue'
 
 const router = useRouter()
 const loading = ref(false)
 const subjects = ref([])
 const topics = ref([])
 
-// Mock user ID (gerçek uygulamada auth'dan gelecek)
 const currentUserId = 'cdce62f1-cdf8-4ca7-9e56-a5f85303cee6'
 
-// Quill editor toolbar
 const editorToolbar = [
   ['bold', 'italic', 'underline'],
   ['image']
@@ -223,13 +239,11 @@ const form = ref({
   ]
 })
 
-// Seçilen derse göre konuları filtrele
 const filteredTopics = computed(() => {
   if (!form.value.subjectId) return []
   return topics.value.filter(t => t.subjectId === form.value.subjectId)
 })
 
-// Ders değiştiğinde konuyu sıfırla
 const onSubjectChange = () => {
   form.value.topicId = ''
 }
@@ -238,13 +252,11 @@ const onSubjectChange = () => {
 const showEditorModal = ref(false)
 const editorContent = ref('')
 const editorTitle = ref('')
-const editorType = ref('') // 'question' veya 'option'
+const editorType = ref('')
 const editingOptionIndex = ref(-1)
 
-// Subject ve Topic'leri yükle
 onMounted(async () => {
   try {
-    // Şimdilik mock data kullan (backend endpoint'leri eklenecek)
     subjects.value = [
       { id: '11111111-1111-1111-1111-111111111111', name: 'Matematik' },
       { id: '22222222-2222-2222-2222-222222222222', name: 'Fizik' },
@@ -253,45 +265,48 @@ onMounted(async () => {
     ]
 
     topics.value = [
-      // Matematik konuları
       { id: '11111111-1111-1111-1111-111111111112', subjectId: '11111111-1111-1111-1111-111111111111', name: 'Temel Matematik' },
       { id: '11111111-1111-1111-1111-111111111113', subjectId: '11111111-1111-1111-1111-111111111111', name: 'Geometri' },
       { id: '11111111-1111-1111-1111-111111111114', subjectId: '11111111-1111-1111-1111-111111111111', name: 'İntegral' },
-      // Fizik konuları
       { id: '22222222-2222-2222-2222-222222222223', subjectId: '22222222-2222-2222-2222-222222222222', name: 'Kuvvet ve Hareket' },
       { id: '22222222-2222-2222-2222-222222222224', subjectId: '22222222-2222-2222-2222-222222222222', name: 'Elektrik' },
       { id: '22222222-2222-2222-2222-222222222225', subjectId: '22222222-2222-2222-2222-222222222222', name: 'Optik' },
-      // Kimya konuları
       { id: '33333333-3333-3333-3333-333333333334', subjectId: '33333333-3333-3333-3333-333333333333', name: 'Atomun Yapısı' },
       { id: '33333333-3333-3333-3333-333333333335', subjectId: '33333333-3333-3333-3333-333333333333', name: 'Organik Kimya' },
-      // Biyoloji konuları
       { id: '44444444-4444-4444-4444-444444444445', subjectId: '44444444-4444-4444-4444-444444444444', name: 'Hücre' },
       { id: '44444444-4444-4444-4444-444444444446', subjectId: '44444444-4444-4444-4444-444444444444', name: 'Genetik' }
     ]
   } catch (error) {
     console.error('Veriler yüklenemedi:', error)
-    alert('Veriler yüklenirken bir hata oluştu')
   }
 })
 
-// HTML içeriğini kontrol et
 const hasTextContent = (html) => {
   if (!html) return false
   const text = html.replace(/<[^>]*>/g, '').trim()
   return text.length > 0
 }
 
-// Doğru cevap var mı?
 const hasCorrectAnswer = computed(() => {
   return form.value.options.some(opt => opt.isCorrect)
 })
 
-// Kaydet butonu aktif mi?
-const canSubmit = computed(() => {
-  // Dolu cevapları say
-  const filledOptions = form.value.options.filter(opt => hasTextContent(opt.text))
+const filledOptionsCount = computed(() => {
+  return form.value.options.filter(opt => hasTextContent(opt.text)).length
+})
 
-  // Doğru işaretli cevap dolu mu?
+const showWarning = computed(() => {
+  return filledOptionsCount.value > 0 && !hasCorrectAnswer.value
+})
+
+const warningMessage = computed(() => {
+  if (!hasCorrectAnswer.value && filledOptionsCount.value > 0) {
+    return 'Doğru cevabı işaretlemeyi unutmayın!'
+  }
+  return ''
+})
+
+const canSubmit = computed(() => {
   const correctOption = form.value.options.find(opt => opt.isCorrect)
   const isCorrectAnswerFilled = correctOption && hasTextContent(correctOption.text)
 
@@ -301,7 +316,7 @@ const canSubmit = computed(() => {
     form.value.examType &&
     form.value.difficulty &&
     hasTextContent(form.value.text) &&
-    filledOptions.length >= 2 &&
+    filledOptionsCount.value >= 2 &&
     hasCorrectAnswer.value &&
     isCorrectAnswerFilled
   )
@@ -310,16 +325,14 @@ const canSubmit = computed(() => {
 const getLayoutClass = (layout) => {
   switch (layout) {
     case 'Grid':
-      return 'options-layout options-layout--grid'
+      return 'options-grid options-grid--2col'
     case 'Horizontal':
-      return 'options-layout options-layout--horizontal'
-    case 'Vertical':
+      return 'options-grid options-grid--5col'
     default:
-      return 'options-layout options-layout--vertical'
+      return 'options-grid options-grid--1col'
   }
 }
 
-// Modal açma fonksiyonları
 const openQuestionEditor = () => {
   editorTitle.value = 'Soru Metni'
   editorType.value = 'question'
@@ -328,7 +341,7 @@ const openQuestionEditor = () => {
 }
 
 const openOptionEditor = (index) => {
-  editorTitle.value = `Cevap ${String.fromCharCode(65 + index)}`
+  editorTitle.value = `Şık ${String.fromCharCode(65 + index)}`
   editorType.value = 'option'
   editingOptionIndex.value = index
   editorContent.value = form.value.options[index].text
@@ -353,38 +366,15 @@ const saveEditorContent = () => {
 }
 
 const setCorrectAnswer = (index) => {
-  // Tüm cevapları false yap
   form.value.options.forEach(opt => opt.isCorrect = false)
-  // Seçilen cevabı true yap
   form.value.options[index].isCorrect = true
 }
 
-const addOption = () => {
-  if (form.value.options.length >= 5) {
-    alert('En fazla 5 cevap ekleyebilirsiniz!')
-    return
-  }
-  form.value.options.push({ text: '', isCorrect: false })
-}
-
-const removeOption = (index) => {
-  if (form.value.options.length <= 2) {
-    alert('En az 2 cevap olmalıdır!')
-    return
-  }
-  form.value.options.splice(index, 1)
-}
-
 const handleSubmit = async () => {
-  if (!canSubmit.value) {
-    alert('Lütfen tüm alanları doldurun, en az 2 cevap girin ve doğru cevabı işaretleyin!')
-    return
-  }
+  if (!canSubmit.value) return
 
   try {
     loading.value = true
-
-    // Sadece dolu cevapları gönder
     const filledOptions = form.value.options.filter(opt => hasTextContent(opt.text))
 
     await api.post('/questions', {
@@ -398,7 +388,7 @@ const handleSubmit = async () => {
       options: filledOptions
     })
 
-    alert('Soru başarıyla gönderildi! Onay sürecinden sonra kullanılabilir olacaktır.')
+    alert('Soru başarıyla gönderildi!')
     router.push('/')
   } catch (error) {
     const errorMessage = error.response?.data?.error || 'Soru eklenirken bir hata oluştu'
@@ -412,357 +402,425 @@ const handleSubmit = async () => {
 <style scoped>
 .create-question {
   min-height: calc(100vh - 80px);
+  padding: 24px;
 }
 
-.question-form-container {
-  max-width: 900px;
+.form-container {
+  max-width: 800px;
   margin: 0 auto;
 }
 
-.form-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 2rem;
+/* Header */
+.form-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.header-icon {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  background: var(--mario-blue);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 0 #037bb5;
 }
 
 .form-title {
   font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
+  font-weight: 800;
   color: var(--text);
+  margin: 0;
 }
 
+/* Form Card */
+.form-card {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 28px;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Form Section */
+.form-section {
+  margin-bottom: 28px;
+}
+
+.form-section:last-of-type {
+  margin-bottom: 0;
+}
+
+/* Category Grid */
 .category-grid {
-  background: var(--bg-card-light);
-  padding: 1rem;
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  gap: 16px;
 }
 
-.form-label {
+/* Section Labels */
+.section-label {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.section-label .hint {
+  font-weight: 500;
   color: var(--text-muted);
-  margin-bottom: 0.5rem;
-  font-weight: 600;
+  text-transform: none;
+  font-size: 0.75rem;
 }
 
-.form-select {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 0.9rem;
-  background: var(--input-bg);
-  color: var(--text);
-  cursor: pointer;
-}
-
-.form-select:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--glow-blue);
-}
-
-.form-select.disabled {
-  background: var(--bg-card);
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.form-select option {
-  background: var(--bg-card);
-  color: var(--text);
-}
-
-/* Question Section */
-.question-section {
-  margin-bottom: 1.5rem;
-}
-
-.question-preview {
+/* Question Box */
+.question-box {
   display: flex;
-  align-items: start;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  background: var(--bg-input);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  padding: 1rem;
-  border-radius: 8px;
-  transition: background 0.2s;
-  background: var(--bg-card-light);
+  transition: all 0.15s ease;
 }
 
-.question-preview:hover {
-  background: var(--input-bg);
+.question-box:hover {
+  border-color: var(--mario-blue);
+  background: var(--bg-card-hover);
 }
 
-.question-preview--empty {
-  background: var(--warning);
-  background: rgba(245, 158, 11, 0.15);
+.question-box--filled {
+  border-color: var(--mario-green);
+}
+
+.question-box--filled:hover {
+  border-color: var(--mario-blue);
 }
 
 .question-number {
-  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  background: var(--mario-red);
   color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-weight: bold;
-  flex-shrink: 0;
+  font-weight: 800;
+  font-size: 1.1rem;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 3px 0 #a31b18;
+}
+
+.question-content {
+  flex: 1;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
 }
 
 .question-text {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  flex: 1;
   color: var(--text);
+  line-height: 1.5;
 }
 
-.question-placeholder {
-  flex: 1;
-  color: var(--warning);
-  font-style: italic;
+.placeholder {
+  color: var(--text-muted);
 }
 
 .edit-icon {
-  font-size: 1.3rem;
-  color: var(--primary);
-  flex-shrink: 0;
-  cursor: pointer;
+  font-size: 1.2rem;
+  opacity: 0.5;
+  transition: opacity 0.15s;
 }
 
-.edit-icon--small {
-  font-size: 1.1rem;
-  margin-left: 1rem;
+.question-box:hover .edit-icon {
+  opacity: 1;
 }
 
-/* Layout Selector */
-.layout-selector {
+/* Layout Buttons */
+.layout-buttons {
   display: flex;
-  gap: 0.25rem;
-  margin-bottom: 1rem;
-  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.layout-btn {
-  padding: 0.35rem 0.5rem;
-  border: none;
-  background: var(--bg-card-light);
-  color: var(--text-muted);
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  transition: all 0.2s;
-}
-
-.layout-btn:hover {
-  background: var(--input-bg);
-}
-
-.layout-btn--active {
-  background: var(--primary);
-  color: white;
-}
-
-/* Options Layout */
-.options-layout--vertical {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.options-layout--grid {
+/* Options Grid */
+.options-grid {
   display: grid;
+  gap: 12px;
+}
+
+.options-grid--1col {
+  grid-template-columns: 1fr;
+}
+
+.options-grid--2col {
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
 }
 
-.options-layout--horizontal {
-  display: grid;
+.options-grid--5col {
   grid-template-columns: repeat(5, 1fr);
-  gap: 1rem;
 }
 
 /* Option Item */
 .option-item {
   display: flex;
-  align-items: start;
-  padding: 0.75rem;
-  border-radius: 6px;
-  transition: background 0.2s;
-  background: var(--bg-card-light);
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-input);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: all 0.15s ease;
 }
 
 .option-item:hover {
-  background: var(--input-bg);
+  border-color: var(--mario-blue);
+  background: var(--bg-card-hover);
 }
 
-.option-item--empty {
-  background: rgba(245, 158, 11, 0.15);
+.option-item--filled {
+  border-color: var(--text-muted);
 }
 
-.option-radio {
-  margin-right: 0.75rem;
-  margin-top: 0.25rem;
-  flex-shrink: 0;
+.option-item--correct {
+  border-color: var(--mario-green);
+  background: rgba(67, 176, 71, 0.08);
+}
+
+/* Option Letter Button */
+.option-letter-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  accent-color: var(--primary);
+  transition: all 0.15s ease;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--text);
 }
 
+.option-letter-btn:hover {
+  border-color: var(--mario-green);
+  background: rgba(67, 176, 71, 0.1);
+  transform: scale(1.05);
+}
+
+.option-letter-btn--selected {
+  background: var(--mario-green);
+  border-color: var(--mario-green);
+  color: white;
+  box-shadow: 0 3px 0 #2d8a31;
+}
+
+.option-letter-btn--selected:hover {
+  background: var(--mario-green);
+}
+
+/* Option Content */
 .option-content {
   flex: 1;
-  min-width: 0;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
   cursor: pointer;
 }
 
-.option-text-wrapper {
-  display: inline;
+.option-text {
   color: var(--text);
+  line-height: 1.4;
 }
 
-.option-letter {
-  font-weight: bold;
-  margin-right: 0.5rem;
-  color: var(--text);
+/* Edit Icon Button */
+.edit-icon-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+  padding: 4px;
 }
 
-.option-placeholder {
-  color: var(--warning);
-  font-style: italic;
+.option-item:hover .edit-icon-btn {
+  opacity: 1;
 }
 
 /* Warning Box */
 .warning-box {
-  margin-top: 1.5rem;
-  padding: 0.75rem;
-  background: rgba(245, 158, 11, 0.15);
-  border-radius: 6px;
-  border: 1px solid var(--warning);
-}
-
-.warning-text {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--warning);
-}
-
-/* Action Buttons */
-.action-buttons {
   display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--border);
-}
-
-.btn-cancel {
-  padding: 1rem 2rem;
-  background: var(--bg-card-light);
-  color: var(--text);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: background 0.2s;
-}
-
-.btn-cancel:hover {
-  background: var(--input-bg);
-}
-
-.btn-submit {
-  padding: 1rem 2rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: rgba(251, 208, 0, 0.12);
+  border: 2px solid var(--mario-yellow);
+  border-radius: var(--radius-md);
+  margin-top: 20px;
+  color: #92400e;
   font-weight: 600;
-  cursor: pointer;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-  color: white;
-  box-shadow: 0 2px 8px var(--glow-blue);
-  transition: all 0.2s;
+  font-size: 0.9rem;
 }
 
-.btn-submit:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px var(--glow-blue);
+.warning-icon {
+  font-size: 1.2rem;
 }
 
-.btn-submit--disabled,
-.btn-submit:disabled {
-  background: var(--bg-card-light);
-  color: var(--text-muted);
-  cursor: not-allowed;
-  box-shadow: none;
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 2px solid var(--border);
 }
 
 /* Modal */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 2rem;
+  padding: 24px;
 }
 
-.modal-content {
+.modal-card {
   background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 2rem;
-  max-width: 800px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-xl);
+  max-width: 700px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 8px 32px var(--shadow);
+  box-shadow: var(--shadow-lg);
 }
 
-.modal-actions {
+.modal-header {
   display: flex;
-  gap: 1rem;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 2px solid var(--border);
+}
+
+.modal-icon {
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: var(--mario-blue);
+  border-radius: var(--radius-md);
+  box-shadow: 0 3px 0 #037bb5;
+}
+
+.modal-title {
+  flex: 1;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+}
+
+.modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--bg-input);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+}
+
+.modal-close:hover {
+  background: var(--mario-red);
+  border-color: var(--mario-red);
+  color: white;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
   justify-content: flex-end;
+  padding: 20px 24px;
+  border-top: 2px solid var(--border);
+}
+
+/* Modal Animation */
+.modal-enter-active,
+.modal-leave-active {
+  transition: all 0.25s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .modal-card,
+.modal-leave-to .modal-card {
+  transform: translateY(20px) scale(0.95);
 }
 
 /* Quill Editor */
 .quill-editor {
-  min-height: 300px;
-  margin-bottom: 1.5rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
 :deep(.ql-toolbar) {
-  background: var(--bg-card-light);
-  border-color: var(--border);
-  border-radius: 8px 8px 0 0;
+  background: var(--bg-input);
+  border: 2px solid var(--border);
+  border-bottom: none;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
 :deep(.ql-container) {
-  background: var(--input-bg);
-  border-color: var(--border);
-  border-radius: 0 0 8px 8px;
+  background: var(--bg-input);
+  border: 2px solid var(--border);
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
   color: var(--text);
   font-size: 1rem;
+  font-family: var(--font-primary);
 }
 
 :deep(.ql-editor) {
-  min-height: 250px;
+  min-height: 200px;
 }
 
 :deep(.ql-editor.ql-blank::before) {
   color: var(--text-muted);
-  font-style: italic;
+  font-style: normal;
 }
 
 :deep(.ql-stroke) {
@@ -780,32 +838,50 @@ const handleSubmit = async () => {
 :deep(img) {
   max-width: 100%;
   height: auto;
-  border-radius: 8px;
-  margin: 0.5rem 0;
+  border-radius: var(--radius-sm);
+  margin: 8px 0;
 }
 
-:deep(p) {
-  margin: 0;
-  display: inline;
-}
-
+/* Responsive */
 @media (max-width: 768px) {
+  .create-question {
+    padding: 16px;
+  }
+
+  .form-card {
+    padding: 20px;
+  }
+
   .category-grid {
     grid-template-columns: 1fr;
   }
 
-  .options-layout--horizontal {
+  .options-grid--5col {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .action-buttons {
+  .options-grid--2col {
+    grid-template-columns: 1fr;
+  }
+
+  .layout-buttons {
+    width: 100%;
+  }
+
+  .layout-buttons > * {
+    flex: 1;
+  }
+
+  .form-actions {
     flex-direction: column;
   }
 
-  .btn-cancel,
-  .btn-submit {
+  .form-actions > * {
     width: 100%;
-    text-align: center;
+  }
+
+  .modal-card {
+    margin: 16px;
   }
 }
 </style>

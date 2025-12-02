@@ -18,10 +18,10 @@
     <div class="spectator-content">
       <!-- Left Side: Question Display -->
       <div class="question-section">
-        <div class="eliminated-banner">
+        <MarioCard color="red" class="eliminated-banner">
           <span class="banner-icon">💀</span>
           <span class="banner-text">Oyundan Elendin - Sadece İzleyebilirsin</span>
-        </div>
+        </MarioCard>
 
         <!-- Waiting for next question (sync with active players) -->
         <div v-if="waitingForNextQuestion" class="waiting-state">
@@ -115,6 +115,7 @@ import { useRoomStore } from '../stores/room'
 import signalrService from '../services/signalrService'
 import api from '../services/api'
 import { sanitizeHtml } from '../utils/sanitize'
+import MarioCard from '../components/MarioCard.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -373,12 +374,13 @@ function getOptionsLayoutClass() {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: linear-gradient(135deg, var(--warning), #d97706);
+  background: var(--mario-orange);
   padding: 6px 14px;
   border-radius: 20px;
   font-weight: 600;
   font-size: 0.85rem;
   color: white;
+  box-shadow: 0 2px 0 #c46a19;
 }
 
 .badge-icon {
@@ -431,12 +433,8 @@ function getOptionsLayoutClass() {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  background: linear-gradient(135deg, var(--error) 0%, #991b1b 100%);
-  padding: 12px 16px;
-  border-radius: 10px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: white;
 }
 
 .banner-icon {
@@ -618,7 +616,7 @@ function getOptionsLayoutClass() {
 .player-avatar {
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  background: var(--mario-blue);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -630,7 +628,7 @@ function getOptionsLayoutClass() {
 }
 
 .player-card.eliminated .player-avatar {
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  background: #6b7280;
 }
 
 .player-info {

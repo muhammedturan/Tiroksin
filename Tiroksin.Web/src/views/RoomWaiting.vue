@@ -1,71 +1,102 @@
 <template>
   <div class="room-waiting">
-    <div class="room-card card">
-      <div class="room-header">
-        <div class="room-title">
-          <span class="room-icon">🎮</span>
-          <h1>{{ roomStore.currentRoom?.name }}</h1>
+    <!-- Two Column Layout -->
+    <div class="waiting-grid">
+      <!-- LEFT COLUMN: Room Info -->
+      <div class="left-column">
+        <!-- Room Header -->
+        <MarioHeader
+          :title="roomStore.currentRoom?.name || 'Oda'"
+          subtitle="⚔️ Eleme Modu"
+          icon="🎮"
+          color="blue"
+        >
+          <template #action>
+            <MarioButton color="red" size="sm" @click="handleLeaveRoom">
+              🚪 Ayrıl
+            </MarioButton>
+          </template>
+        </MarioHeader>
+
+        <!-- Room Code (Big & Prominent) -->
+        <MarioCard color="yellow" class="room-code-card">
+          <span class="code-label">ODA KODU</span>
+          <div class="code-display">
+            <span class="code-value">{{ roomStore.currentRoom?.roomCode }}</span>
+          </div>
+          <MarioButton color="blue" size="sm" @click="copyRoomCode">
+            📋 Kodu Kopyala
+          </MarioButton>
+          <p class="code-hint">Bu kodu arkadaşlarınla paylaş!</p>
+        </MarioCard>
+
+        <!-- Game Stats -->
+        <div class="stats-row">
+          <MarioCard color="blue" class="stat-card">
+            <span class="stat-number">{{ roomStore.currentRoom?.questionCount }}</span>
+            <span class="stat-label">Soru</span>
+          </MarioCard>
+          <MarioCard color="green" class="stat-card">
+            <span class="stat-number">{{ roomStore.players.length }}/{{ roomStore.currentRoom?.maxPlayers }}</span>
+            <span class="stat-label">Oyuncu</span>
+          </MarioCard>
+          <MarioCard color="orange" class="stat-card">
+            <span class="stat-number">{{ roomStore.currentRoom?.minPlayers || 2 }}</span>
+            <span class="stat-label">Min</span>
+          </MarioCard>
         </div>
-        <button @click="handleLeaveRoom" class="btn-leave">🚪 Odadan Ayrıl</button>
+
+        <!-- Start Button (Host Only) -->
+        <div class="action-area">
+          <MarioButton
+            v-if="roomStore.isHost"
+            :color="canStart ? 'green' : 'gray'"
+            size="lg"
+            block
+            :disabled="!canStart"
+            @click="handleStartGame"
+          >
+            <template #icon>{{ canStart ? '🚀' : '⏳' }}</template>
+            {{ canStart ? 'OYUNU BAŞLAT' : `${roomStore.players.length}/${roomStore.currentRoom?.minPlayers || 2} oyuncu gerekli` }}
+          </MarioButton>
+
+          <MarioCard v-else color="gray" class="waiting-host-card">
+            <div class="waiting-host">
+              <div class="pulse-dot"></div>
+              <span>Host oyunu başlatmasını bekliyor...</span>
+            </div>
+          </MarioCard>
+        </div>
       </div>
 
-      <div class="room-code-section">
-        <span class="code-label">Oda Kodu</span>
-        <div class="code-box">
-          <span class="code-value">{{ roomStore.currentRoom?.roomCode }}</span>
-          <button @click="copyRoomCode" class="copy-btn">Kopyala</button>
-        </div>
-      </div>
+      <!-- RIGHT COLUMN: Players List -->
+      <div class="right-column">
+        <MarioCard color="gray" class="players-card">
+          <div class="players-header">
+            <h2>👥 Oyuncular</h2>
+            <span class="player-count">{{ roomStore.players.length }}</span>
+          </div>
 
-      <div class="game-stats">
-        <div class="stat-item">
-          <span class="stat-icon">⚔️</span>
-          <span class="stat-value">Eleme</span>
-          <span class="stat-label">Mod</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-icon">❓</span>
-          <span class="stat-value">{{ roomStore.currentRoom?.questionCount }}</span>
-          <span class="stat-label">Soru</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-icon">👥</span>
-          <span class="stat-value">{{ roomStore.players.length }}/{{ roomStore.currentRoom?.maxPlayers }}</span>
-          <span class="stat-label">Oyuncu</span>
-        </div>
-      </div>
-    </div>
+          <div class="players-list">
+            <!-- Empty State -->
+            <div v-if="roomStore.players.length === 0" class="empty-state">
+              <div class="empty-icon">⏳</div>
+              <span>Oyuncu bekleniyor...</span>
+            </div>
 
-    <div class="players-card card">
-      <div class="players-header">
-        <span>Oyuncular</span>
-        <span class="player-count">{{ roomStore.players.length }}</span>
-      </div>
-      <div class="players-list">
-        <div v-if="roomStore.players.length === 0" class="empty">
-          <span class="empty-icon">⏳</span>
-          <span>Oyuncu bekleniyor...</span>
-        </div>
-        <div v-for="player in roomStore.players" :key="player.username" class="player">
-          <span class="avatar">{{ player.avatar }}</span>
-          <span class="name">{{ player.username }}</span>
-          <span class="ready-badge">Hazir</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="action-section">
-      <button
-        v-if="roomStore.isHost"
-        @click="handleStartGame"
-        :disabled="!canStart"
-        class="btn-start"
-      >
-        {{ canStart ? 'Oyunu Baslat' : `${roomStore.players.length}/${roomStore.currentRoom?.minPlayers || 2} oyuncu gerekli` }}
-      </button>
-      <div v-else class="waiting-text">
-        <span class="pulse-dot"></span>
-        Host oyunu baslatmasini bekliyor...
+            <!-- Player Items -->
+            <div
+              v-for="(player, index) in roomStore.players"
+              :key="player.username"
+              class="player-item"
+              :class="getPlayerColorClass(index)"
+            >
+              <div class="player-avatar">{{ player.avatar }}</div>
+              <span class="player-name">{{ player.username }}</span>
+              <span class="ready-badge">✓ Hazır</span>
+            </div>
+          </div>
+        </MarioCard>
       </div>
     </div>
   </div>
@@ -76,66 +107,69 @@ import { computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useRoomStore } from '../stores/room'
 import { useGameStore } from '../stores/game'
+import { useToastStore } from '../stores/toast'
 import signalrService from '../services/signalrService'
+import MarioCard from '../components/MarioCard.vue'
+import MarioButton from '../components/MarioButton.vue'
+import MarioHeader from '../components/MarioHeader.vue'
 
 const router = useRouter()
 const roomStore = useRoomStore()
 const gameStore = useGameStore()
+const toastStore = useToastStore()
 
 const canStart = computed(() => {
   const minPlayers = roomStore.currentRoom?.minPlayers || 2
   return roomStore.players.length >= minPlayers
 })
 
+const playerColors = ['red', 'blue', 'green', 'orange']
+
+function getPlayerColorClass(index) {
+  return `color-${playerColors[index % playerColors.length]}`
+}
+
 onMounted(async () => {
-  // Setup GameStarting listener for navigation
   setupGameStartingListener()
 
-  // If we already have a room in store, use it (came from create/join)
   if (roomStore.currentRoom) {
-    console.log('✅ Room already in store:', roomStore.currentRoom.roomCode)
+    console.log('Room already in store:', roomStore.currentRoom.roomCode)
     return
   }
 
-  // Only try to rejoin from localStorage if no room in store (page refresh case)
   const savedRoomCode = localStorage.getItem('currentRoomCode')
   if (savedRoomCode) {
     try {
-      console.log('🔄 Rejoining room from localStorage:', savedRoomCode)
+      console.log('Rejoining room:', savedRoomCode)
       await roomStore.joinRoom(savedRoomCode)
     } catch (error) {
-      console.error('❌ Failed to rejoin room:', error)
+      console.error('Failed to rejoin room:', error)
       localStorage.removeItem('currentRoomCode')
       router.push('/')
     }
   } else {
-    // No room in store and no saved room code - go home
-    console.warn('⚠️ No room data found, redirecting to home')
+    console.warn('No room data found, redirecting to home')
     router.push('/')
   }
 })
 
 onUnmounted(() => {
-  // Only clean up GameStarting listener (room events are handled by store)
   signalrService.offAll('GameStarting')
 })
 
 function setupGameStartingListener() {
-  console.log('🔌 Setting up GameStarting listener...')
+  console.log('Setting up GameStarting listener...')
 
   signalrService.on('GameStarting', (data) => {
-    console.log('🚀 GameStarting event received:', data)
+    console.log('GameStarting event received:', data)
     if (data.gameSessionId) {
-      // Store game session ID
       gameStore.gameSessionId = data.gameSessionId
 
-      // Store questions (first question)
       if (data.questions && data.questions.length > 0) {
         gameStore.questions = data.questions
         gameStore.currentQuestionIndex = 0
       }
 
-      // Store players in roomStore for GameArena
       if (data.players && data.players.length > 0) {
         roomStore.players = data.players.map(p => ({
           userId: p.userId,
@@ -144,7 +178,6 @@ function setupGameStartingListener() {
           score: p.score || 0,
           isEliminated: p.isEliminated || false
         }))
-        console.log('👥 Players stored:', roomStore.players)
       }
 
       router.push(`/game/${data.gameSessionId}`)
@@ -156,7 +189,6 @@ async function handleStartGame() {
   if (!canStart.value) return
   try {
     const data = await gameStore.startGame(roomStore.currentRoom.roomId)
-    // Host için de store'u güncelle (GameStarting eventi zaten gelecek ama güvenlik için)
     if (data.gameSessionId) {
       gameStore.gameSessionId = data.gameSessionId
       if (data.questions && data.questions.length > 0) {
@@ -164,9 +196,8 @@ async function handleStartGame() {
         gameStore.currentQuestionIndex = 0
       }
     }
-    // Router push yapmıyoruz - GameStarting eventi yönlendirecek
   } catch (error) {
-    alert(error.message || 'Hata')
+    toastStore.error(error.message || 'Hata')
   }
 }
 
@@ -179,290 +210,305 @@ function copyRoomCode() {
   const code = roomStore.currentRoom?.roomCode
   if (code) {
     navigator.clipboard.writeText(code)
-    alert(`Kod kopyalandı: ${code}`)
+    toastStore.success(`Kod kopyalandı: ${code}`)
   }
 }
 </script>
 
 <style scoped>
+/* ==========================================
+   ROOM WAITING - COMPACT & WIDE LAYOUT
+   ========================================== */
+
 .room-waiting {
-  max-width: 500px;
+  max-width: 1200px;
   margin: 0 auto;
+  padding: 0;
 }
 
-.room-card {
-  margin-bottom: 20px;
+.waiting-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
 }
 
-.room-header {
+/* ==========================================
+   LEFT COLUMN: ROOM INFO
+   ========================================== */
+
+.left-column {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.room-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.room-icon {
-  font-size: 1.8rem;
-}
-
-.room-title h1 {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0;
-}
-
-.btn-leave {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid var(--error);
-  padding: 10px 18px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--error);
-  transition: all 0.2s;
-}
-
-.btn-leave:hover {
-  background: var(--error);
-  border-color: var(--error);
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-}
-
-.room-code-section {
+/* Room Code Card - Uses MarioCard */
+.room-code-card {
   text-align: center;
-  padding: 20px;
-  background: var(--bg-card-light);
-  border-radius: 12px;
-  margin-bottom: 20px;
 }
 
 .code-label {
   display: block;
-  font-size: 0.8rem;
-  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #92400e;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   margin-bottom: 10px;
 }
 
-.code-box {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
+.code-display {
+  margin-bottom: 14px;
+  position: relative;
 }
 
 .code-value {
-  font-family: 'Courier New', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 2rem;
   font-weight: 800;
   letter-spacing: 6px;
-  background: linear-gradient(135deg, var(--primary-light) 0%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #92400e;
 }
 
-.copy-btn {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-  border: none;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 10px 16px;
-  color: white;
-  border-radius: 8px;
-  transition: all 0.2s;
+.code-hint {
+  font-size: 0.75rem;
+  color: rgba(146, 64, 14, 0.8);
+  margin: 12px 0 0 0;
 }
 
-.copy-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px var(--glow-blue);
+/* Stats Row - Using MarioCards */
+.stats-row {
+  display: flex;
+  gap: 10px;
 }
 
-.game-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.stat-item {
+.stat-card {
+  flex: 1;
   text-align: center;
-  padding: 16px 12px;
-  background: var(--bg-card-light);
-  border-radius: 10px;
-  border: 1px solid var(--border);
+  padding: 12px 8px !important;
 }
 
-.stat-icon {
-  font-size: 1.5rem;
+.stat-card .stat-number {
   display: block;
-  margin-bottom: 8px;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: white;
+  line-height: 1;
 }
 
-.stat-value {
+.stat-card .stat-label {
   display: block;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 4px;
-}
-
-.stat-label {
-  display: block;
-  font-size: 0.7rem;
-  color: var(--text-muted);
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.85);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* Action Area */
+.action-area {
+  margin-top: auto;
+}
+
+/* Waiting Host Card */
+.waiting-host-card {
+  padding: 12px !important;
+}
+
+.waiting-host {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.pulse-dot {
+  width: 10px;
+  height: 10px;
+  background: var(--mario-blue);
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.7; }
+}
+
+/* ==========================================
+   RIGHT COLUMN: PLAYERS LIST
+   ========================================== */
+
+.right-column {
+  display: flex;
+  flex-direction: column;
 }
 
 .players-card {
-  margin-bottom: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-height: 450px;
+  overflow: hidden;
 }
 
 .players-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 12px;
+}
+
+.players-header h2 {
   font-size: 1rem;
   font-weight: 700;
   color: var(--text);
-  margin-bottom: 16px;
+  margin: 0;
 }
 
 .player-count {
-  background: var(--primary);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 20px;
+  width: 28px;
+  height: 28px;
+  background: var(--mario-green);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 0.85rem;
+  font-weight: 700;
+  color: white;
+  box-shadow: 0 2px 0 #15803d;
 }
 
 .players-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.players-list .empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 30px;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-}
-
-.empty-icon {
-  font-size: 2rem;
-}
-
-.player {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px;
-  background: var(--bg-card-light);
-  border-radius: 10px;
-  border: 1px solid var(--border);
-}
-
-.player .avatar {
-  font-size: 1.8rem;
-}
-
-.player .name {
   flex: 1;
-  font-weight: 600;
-  font-size: 1rem;
-  color: var(--text);
-}
-
-.ready-badge {
-  background: var(--success);
-  color: white;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.action-section {
-  text-align: center;
-  padding: 10px 0;
-}
-
-.btn-start {
-  width: 100%;
-  padding: 18px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 4px 20px var(--glow-blue);
-}
-
-.btn-start:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px var(--glow-blue);
-}
-
-.btn-start:disabled {
-  background: var(--bg-card-light);
-  color: var(--text-muted);
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.waiting-text {
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+/* Empty State */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 10px;
   color: var(--text-muted);
-  font-size: 0.95rem;
+  font-size: 0.85rem;
+  padding: 30px;
 }
 
-.pulse-dot {
-  width: 10px;
-  height: 10px;
-  background: var(--primary);
-  border-radius: 50%;
-  animation: pulse 1.5s ease-in-out infinite;
+.empty-state .empty-icon {
+  font-size: 2rem;
+  animation: bounce 2s ease-in-out infinite;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.2); }
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
 
-@media (max-width: 480px) {
+/* Player Item - Compact */
+.player-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-input);
+  border-radius: var(--radius-md);
+  border-left: 4px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.player-item:hover {
+  transform: translateX(4px);
+}
+
+.player-item.color-red { border-left-color: var(--mario-red); }
+.player-item.color-blue { border-left-color: var(--mario-blue); }
+.player-item.color-green { border-left-color: var(--mario-green); }
+.player-item.color-orange { border-left-color: var(--mario-yellow); }
+
+.player-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+  color: white;
+}
+
+.player-item.color-red .player-avatar { background: var(--mario-red); box-shadow: 0 2px 0 #b91c1c; }
+.player-item.color-blue .player-avatar { background: var(--mario-blue); box-shadow: 0 2px 0 #037bb5; }
+.player-item.color-green .player-avatar { background: var(--mario-green); box-shadow: 0 2px 0 #15803d; }
+.player-item.color-orange .player-avatar { background: var(--mario-yellow); box-shadow: 0 2px 0 #c9a000; }
+
+.player-name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.ready-badge {
+  padding: 4px 10px;
+  background: var(--mario-green);
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: white;
+  box-shadow: 0 2px 0 #15803d;
+}
+
+/* ==========================================
+   RESPONSIVE DESIGN
+   ========================================== */
+
+@media (max-width: 900px) {
+  .waiting-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .players-card {
+    max-height: 350px;
+  }
+}
+
+@media (max-width: 600px) {
+  .room-header-content {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
   .code-value {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     letter-spacing: 4px;
   }
 
-  .game-stats {
+  .stats-row {
+    flex-direction: column;
     gap: 8px;
   }
 
-  .stat-item {
-    padding: 12px 8px;
+  .stat-card {
+    flex-direction: row !important;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .stat-card .stat-number {
+    font-size: 1.1rem;
   }
 }
 </style>

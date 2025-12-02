@@ -1,17 +1,17 @@
 <template>
   <div class="game-arena">
     <!-- Loading -->
-    <div v-if="loading" class="state-card waiting">
+    <MarioCard v-if="loading" color="blue" class="state-card waiting">
       <div class="state-icon">⏳</div>
       <h2>Soru yükleniyor...</h2>
-    </div>
+    </MarioCard>
 
     <!-- Error -->
-    <div v-else-if="error" class="state-card">
+    <MarioCard v-else-if="error" color="red" class="state-card">
       <div class="state-icon">❌</div>
       <h2>{{ error }}</h2>
-      <button @click="fetchQuestion" class="btn-retry">Tekrar Dene</button>
-    </div>
+      <MarioButton color="blue" @click="fetchQuestion">Tekrar Dene</MarioButton>
+    </MarioCard>
 
     <!-- Question Display -->
     <template v-else-if="question">
@@ -64,12 +64,12 @@
 
           <!-- Action Bar -->
           <div class="action-bar">
-            <button v-if="!showAnswer && selectedOption" @click="showAnswer = true" class="btn-check">
+            <MarioButton v-if="!showAnswer && selectedOption" color="green" @click="showAnswer = true">
               Cevabı Göster
-            </button>
-            <button v-if="showAnswer" @click="resetQuestion" class="btn-reset">
+            </MarioButton>
+            <MarioButton v-if="showAnswer" color="gray" @click="resetQuestion">
               Tekrar Dene
-            </button>
+            </MarioButton>
           </div>
         </div>
       </div>
@@ -94,6 +94,8 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '../services/api'
 import { sanitizeHtml } from '../utils/sanitize'
+import MarioCard from '../components/MarioCard.vue'
+import MarioButton from '../components/MarioButton.vue'
 
 const route = useRoute()
 const question = ref(null)
@@ -242,16 +244,11 @@ function getSafeOptionText(text) {
 
 /* State Cards */
 .state-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 40px 24px;
   text-align: center;
 }
 
-.state-card.waiting {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
-  border: 2px solid var(--primary);
+.state-card h2 {
+  color: white;
 }
 
 .state-icon {
@@ -263,24 +260,8 @@ function getSafeOptionText(text) {
   font-size: 1.4rem;
   font-weight: 700;
   margin: 0 0 10px 0;
-  color: var(--text);
 }
 
-.btn-retry {
-  margin-top: 20px;
-  padding: 12px 32px;
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.btn-retry:hover {
-  opacity: 0.9;
-}
 
 /* Game Container */
 .game-container {
@@ -414,35 +395,6 @@ function getSafeOptionText(text) {
   gap: 12px;
 }
 
-.btn-check, .btn-reset {
-  padding: 14px 40px;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-check {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-  color: white;
-  box-shadow: 0 2px 8px var(--glow-blue);
-}
-
-.btn-check:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px var(--glow-blue);
-}
-
-.btn-reset {
-  background: var(--bg-card-light);
-  color: var(--text);
-}
-
-.btn-reset:hover {
-  background: var(--bg-card);
-}
 
 /* Question Info */
 .question-info {
