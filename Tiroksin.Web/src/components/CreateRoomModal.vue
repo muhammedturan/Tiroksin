@@ -11,9 +11,11 @@
         <MarioInput
           v-model="form.name"
           label="Oda Adı"
-          placeholder="Örnek: Efsane Yarış"
+          placeholder="EFSANE YARIŞ"
           :maxlength="50"
           prefix="🏠"
+          :is-uppercase="true"
+          :centered="true"
           @enter="handleCreate"
         />
 
@@ -49,9 +51,9 @@
 
         <MarioInput
           v-if="!form.isPublic"
-          v-model="form.password"
-          type="password"
+          v-model="form.password"          
           label="Parola"
+          :centered="true"
           placeholder="Odaya giriş parolası"
           :maxlength="20"
           prefix="🔑"
@@ -248,35 +250,50 @@ async function handleCreate() {
 
 .toggle-btn {
   flex: 1;
-  padding: 14px 18px;
-  background: var(--bg-input);
-  border: 2px solid var(--border);
+  padding: 12px 18px;
+  background: var(--bg-card-light);
+  border: none;
   border-radius: var(--radius-md);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  color: var(--text-muted);
+  color: var(--text);
   cursor: pointer;
   transition: all 0.15s ease;
+  box-shadow: 0 4px 0 var(--border);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .toggle-btn:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--border-light);
-  color: var(--text);
   transform: translateY(-2px);
+  box-shadow: 0 6px 0 var(--border);
+  background: var(--bg-card-hover);
+}
+
+.toggle-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--border);
 }
 
 .toggle-btn.active {
-  background: var(--option-blue);
-  border-color: var(--option-blue);
+  background: var(--mario-blue);
   color: white;
-  box-shadow: 0 3px 0 #0e4fa3;
+  box-shadow: 0 4px 0 #037bb5;
+}
+
+.toggle-btn.active:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #037bb5;
 }
 
 .toggle-btn.active:last-child {
-  background: var(--option-yellow);
-  border-color: var(--option-yellow);
-  box-shadow: 0 3px 0 #a67d00;
+  background: var(--mario-yellow);
+  color: #92400e;
+  box-shadow: 0 4px 0 #d97706;
+}
+
+.toggle-btn.active:last-child:hover {
+  box-shadow: 0 6px 0 #d97706;
 }
 
 .error-message {

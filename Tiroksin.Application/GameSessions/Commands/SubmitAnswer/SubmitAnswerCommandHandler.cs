@@ -99,7 +99,26 @@ public class SubmitAnswerCommandHandler : IRequestHandler<SubmitAnswerCommand, S
 
         bool isCorrect = request.SelectedOptionId.HasValue && request.SelectedOptionId.Value == correctOption.Id;
         bool isTimeout = timeSpent >= 60 || !request.SelectedOptionId.HasValue;
-        int pointsEarned = isCorrect ? question.Points : 0;
+
+        // Speed-based scoring system:
+        // Base points: Question's own point value (question.Points)
+        // Speed bonus: Up to 100% of base points based on remaining time
+        // Formula: basePoints + (remainingTime / totalTime) * basePoints
+        // Example: 10pt question answered in 10sec (out of 60) = 10 + (50/60 * 10) = ~18 points
+        // Fast answer = up to 2x points, slow answer = base points only
+        int pointsEarned = 0;
+        if (isCorrect)
+        {
+            int basePoints = question.Points;
+            const int questionTimeout = 60;
+
+            int remainingTime = Math.Max(0, questionTimeout - timeSpent);
+            double speedMultiplier = (double)remainingTime / questionTimeout;
+            int speedBonus = (int)Math.Round(speedMultiplier * basePoints);
+
+            pointsEarned = basePoints + speedBonus;
+        }
+
         bool isEliminated = !isCorrect; // Wrong answer = eliminated
 
         // 5. Save answer to DB
@@ -182,16 +201,26 @@ public class SubmitAnswerCommandHandler : IRequestHandler<SubmitAnswerCommand, S
                 gameSession.Status = RoomStatus.Finished;
                 gameSession.FinishedAt = DateTime.UtcNow;
 
+                // Calculate rankings for ALL players based on score
+                var rankedPlayers = allPlayers
+                    .OrderByDescending(p => p.Score)
+                    .ThenBy(p => p.IsEliminated) // Non-eliminated first
+                    .ThenBy(p => p.EliminatedAtQuestionIndex ?? int.MaxValue) // Later elimination = better
+                    .ToList();
+
+                for (int i = 0; i < rankedPlayers.Count; i++)
+                {
+                    rankedPlayers[i].Rank = i + 1;
+                    rankedPlayers[i].IsWinner = i == 0 && !rankedPlayers[i].IsEliminated;
+                }
+
                 if (remainingPlayers == 1)
                 {
-                    var winner = allPlayers.First(p => !p.IsEliminated);
-                    winner.IsWinner = true;
-                    winner.Rank = 1;
-                    _logger.LogInformation("Game winner determined: {WinnerId}", winner.UserId);
+                    _logger.LogInformation("Game winner determined: {WinnerId}", rankedPlayers.First(p => p.IsWinner).UserId);
                 }
                 else
                 {
-                    // Everyone eliminated - no winner
+                    // Everyone eliminated - no winner, but still ranked by score
                     _logger.LogInformation("Game ended with no winner - all players eliminated");
                 }
 
@@ -226,6 +255,7 @@ public class SubmitAnswerCommandHandler : IRequestHandler<SubmitAnswerCommand, S
             CorrectAnswers = player.CorrectAnswers,
             WrongAnswers = player.WrongAnswers,
             IsEliminated = isEliminated,
+            IsGameFinished = gameSession.Status == RoomStatus.Finished,
             Message = isEliminated
                 ? (isTimeout ? "Süre doldu! Elendiniz" : "Yanlış! Elendiniz")
                 : (isCorrect ? "Doğru!" : "Yanlış")

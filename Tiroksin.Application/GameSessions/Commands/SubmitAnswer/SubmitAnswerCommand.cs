@@ -20,6 +20,7 @@ public record SubmitAnswerResponse
     public int CorrectAnswers { get; init; }
     public int WrongAnswers { get; init; }
     public bool IsEliminated { get; init; } // Survival modunda elenme durumu
+    public bool IsGameFinished { get; init; } // Oyun bitmiş mi
     public string Message { get; init; } = string.Empty;
     public bool Success { get; init; }
 }

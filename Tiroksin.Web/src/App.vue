@@ -15,9 +15,14 @@ const gameStore = useGameStore()
 const themeStore = useThemeStore()
 const toastStore = useToastStore()
 
-// Header'ı login sayfasında gösterme
+// Header'ı login ve oyun sayfalarında gösterme
 const showHeader = computed(() => {
-  return route.path !== '/login'
+  const path = route.path
+  // Login, game arena ve spectator sayfalarında header gizle
+  if (path === '/login') return false
+  if (path.startsWith('/game/')) return false
+  if (path.startsWith('/game-spectator/')) return false
+  return true
 })
 
 onMounted(async () => {

@@ -3,7 +3,7 @@
     <!-- Kahoot-Style Full Screen Layout -->
 
     <!-- Waiting for Others Screen -->
-    <div v-if="waitingForOthers && !waitingForResults" class="fullscreen-state">
+    <MarioDiv v-if="waitingForOthers && !waitingForResults" color="blue" icon="⏳" title="Bekleniyor">
       <div class="state-content">
         <div class="state-icon-large">⏳</div>
         <h1>Cevabın Alındı!</h1>
@@ -13,18 +13,16 @@
           <span class="mini-stat">💯 {{ gameStore.myScore }} puan</span>
         </div>
       </div>
-    </div>
+    </MarioDiv>
 
     <!-- Results Screen (After Everyone Answers) -->
-    <div v-else-if="waitingForResults && currentAnswer" class="fullscreen-state results-state">
+    <MarioDiv
+      v-else-if="waitingForResults && currentAnswer"
+      :color="currentAnswer.isCorrect ? 'green' : 'red'"
+      :icon="currentAnswer.isCorrect ? '✅' : '❌'"
+      :title="currentAnswer.isCorrect ? 'Doğru!' : 'Yanlış!'"
+    >
       <div class="state-content">
-        <div v-if="currentAnswer.isCorrect" class="result-icon correct">✅</div>
-        <div v-else class="result-icon wrong">❌</div>
-
-        <h1 :class="currentAnswer.isCorrect ? 'text-correct' : 'text-wrong'">
-          {{ currentAnswer.isCorrect ? 'Doğru!' : 'Yanlış!' }}
-        </h1>
-
         <div class="correct-answer-display">
           <span class="answer-label">Doğru Cevap:</span>
           <div class="answer-box">
@@ -41,36 +39,46 @@
           +{{ currentAnswer.pointsEarned }} puan
         </div>
 
+        <!-- Leader Display -->
+        <div v-if="sortedScoreboard.length > 0" class="leader-display">
+          <span class="leader-crown">👑</span>
+          <span class="leader-name">{{ sortedScoreboard[0].username }}</span>
+          <span class="leader-score">{{ sortedScoreboard[0].score }} puan</span>
+        </div>
+
         <div v-if="nextQuestionCountdown > 0" class="next-countdown">
           <div class="countdown-number">{{ nextQuestionCountdown }}</div>
           <span>Sonraki soru</span>
         </div>
       </div>
-    </div>
+    </MarioDiv>
 
     <!-- Active Question - Kahoot Full Screen Layout -->
     <div v-else-if="gameStore.currentQuestion" class="kahoot-layout">
-      <!-- Top Section: Timer + Question -->
-      <div class="top-section">
-        <!-- Timer Circle (Left) -->
-        <div class="timer-circle" :class="{ warning: timeLeft <= 10 }">
+      <!-- Game Header Bar: Timer + Stats -->
+      <div class="game-header-bar">
+        <!-- Circular Timer with Progress Bar (Left) -->
+        <div class="timer-container" :class="{ warning: timeLeft <= 10 }">
+          <svg class="timer-progress" viewBox="0 0 100 100">
+            <circle
+              class="timer-bg"
+              cx="50"
+              cy="50"
+              r="45"
+            />
+            <circle
+              class="timer-fill"
+              cx="50"
+              cy="50"
+              r="45"
+              :style="{ strokeDashoffset: timerProgress }"
+            />
+          </svg>
           <span class="timer-value">{{ timeLeft }}</span>
         </div>
 
-        <!-- Question Box (Center) -->
-        <div class="question-box">
-          <div class="question-text" v-html="getSafeQuestionText()"></div>
-          <!-- Question Image (if exists) -->
-          <img
-            v-if="gameStore.currentQuestion.imageUrl"
-            :src="gameStore.currentQuestion.imageUrl"
-            alt="Question Image"
-            class="question-image"
-          />
-        </div>
-
         <!-- Stats (Right) -->
-        <div class="stats-column">
+        <div class="stats-row">
           <div class="stat-badge question-badge">
             <span class="stat-number">{{ gameStore.currentQuestionIndex + 1 }}</span>
             <span class="stat-label">SORU</span>
@@ -85,6 +93,20 @@
           </div>
         </div>
       </div>
+
+      <!-- Question Section -->
+      <MarioDiv color="blue" icon="❓" title="Soru" :badge="gameStore.currentQuestionIndex + 1" class="question-section">
+        <div class="question-box">
+          <div class="question-text" v-html="getSafeQuestionText()"></div>
+          <!-- Question Image (if exists) -->
+          <img
+            v-if="gameStore.currentQuestion.imageUrl"
+            :src="gameStore.currentQuestion.imageUrl"
+            alt="Question Image"
+            class="question-image"
+          />
+        </div>
+      </MarioDiv>
 
       <!-- Bottom Section: 2x2 Options Grid -->
       <div class="options-section">
@@ -128,8 +150,9 @@ import { useRoomStore } from '../stores/room'
 import signalrService from '../services/signalrService'
 import api from '../services/api'
 import { sanitizeHtml } from '../utils/sanitize'
-import { playSelect, playCorrect, playWrong, playVictory, playFireball, preloadSounds } from '../services/soundService'
+import { playSelect, playCorrect, playWrong, playVictory, playFireball, playWarning, preloadSounds } from '../services/soundService'
 import MarioCard from '../components/MarioCard.vue'
+import MarioDiv from '../components/MarioDiv.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -159,6 +182,14 @@ let countdownTimer = null
 
 const activePlayersCount = computed(() => {
   return players.value.filter(p => !p.isEliminated).length
+})
+
+// Circular timer progress calculation
+const totalTime = computed(() => gameStore.currentQuestion?.timePerQuestion || 60)
+const timerProgress = computed(() => {
+  const circumference = 2 * Math.PI * 45 // r=45
+  const progress = timeLeft.value / totalTime.value
+  return circumference * (1 - progress)
 })
 
 const sortedScoreboard = computed(() => {
@@ -440,6 +471,12 @@ function startTimer() {
   stopTimer()
   timer = setInterval(() => {
     timeLeft.value--
+
+    // Play warning sound when 10 seconds remain
+    if (timeLeft.value === 10) {
+      playWarning() // Mario warning sound - son 10 saniye
+    }
+
     if (timeLeft.value <= 0) {
       stopTimer()
       if (!waitingForOthers.value && !waitingForResults.value && !isEliminated.value) {
@@ -513,6 +550,16 @@ async function submitAnswer() {
       isEliminated.value = true
     }
 
+    // Check if game finished from API response (fallback for SignalR issues)
+    if (result.isGameFinished) {
+      console.log('🏁 Game finished detected from API response!')
+      stopTimer()
+      stopCountdown()
+      playVictory()
+      router.push(`/game-result/${gameStore.gameSessionId}`)
+      return
+    }
+
     waitingForOthers.value = true
     console.log('⏳ Now waiting for others')
   } catch (error) {
@@ -545,6 +592,16 @@ async function autoSubmitOnTimeout() {
 
     if (result.isEliminated) {
       isEliminated.value = true
+    }
+
+    // Check if game finished from API response (fallback for SignalR issues)
+    if (result.isGameFinished) {
+      console.log('🏁 Game finished detected from API response (timeout)!')
+      stopTimer()
+      stopCountdown()
+      playVictory()
+      router.push(`/game-result/${gameStore.gameSessionId}`)
+      return
     }
 
     waitingForOthers.value = true
@@ -610,28 +667,12 @@ function getOptionIcon(index) {
 }
 
 /* ==========================================
-   FULLSCREEN STATE SCREENS - COMPACT
+   STATE SCREENS - With MarioDiv
    ========================================== */
-
-.fullscreen-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 16px;
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  margin-top: 12px;
-}
-
-.fullscreen-state.results-state {
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
-}
 
 .state-content {
   text-align: center;
-  max-width: 320px;
+  width: 100%;
   animation: fadeInUp 0.3s ease;
 }
 
@@ -768,6 +809,38 @@ function getOptionIcon(index) {
   margin: 10px 0;
 }
 
+/* Leader Display */
+.leader-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  border-radius: var(--radius-md);
+  box-shadow: 0 3px 0 #d97706;
+  margin: 12px 0;
+}
+
+.leader-crown {
+  font-size: 1.2rem;
+}
+
+.leader-name {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #92400e;
+}
+
+.leader-score {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #78350f;
+  background: rgba(255, 255, 255, 0.3);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
 /* Next Question Countdown */
 .next-countdown {
   margin-top: 14px;
@@ -794,7 +867,7 @@ function getOptionIcon(index) {
 }
 
 /* ==========================================
-   KAHOOT LAYOUT - HORIZONTAL WIDE
+   KAHOOT LAYOUT - TOP BAR + OPTIONS
    ========================================== */
 
 .kahoot-layout {
@@ -804,33 +877,57 @@ function getOptionIcon(index) {
   gap: 12px;
 }
 
-/* TOP SECTION - Horizontal Bar */
-.top-section {
+/* GAME HEADER BAR - Timer + Stats */
+.game-header-bar {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 12px 16px;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 16px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
 }
 
-/* Timer Circle - Small */
-.timer-circle {
-  width: 48px;
-  height: 48px;
-  background: #3b82f6;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 0 #2563eb;
+/* QUESTION SECTION - MarioDiv override */
+.question-section :deep(.mario-div__content) {
+  padding: 12px 16px;
+}
+
+/* Circular Timer with SVG Progress */
+.timer-container {
+  position: relative;
+  width: 56px;
+  height: 56px;
   flex-shrink: 0;
 }
 
-.timer-circle.warning {
-  background: #ef4444;
-  box-shadow: 0 2px 0 #dc2626;
+.timer-progress {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.timer-bg {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 8;
+}
+
+.timer-fill {
+  fill: none;
+  stroke: #3b82f6;
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 282.74; /* 2 * PI * 45 */
+  transition: stroke-dashoffset 1s linear;
+}
+
+.timer-container.warning .timer-fill {
+  stroke: #ef4444;
+}
+
+.timer-container.warning {
   animation: timerShake 0.3s infinite;
 }
 
@@ -840,22 +937,27 @@ function getOptionIcon(index) {
 }
 
 .timer-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   font-size: 1.2rem;
   font-weight: 800;
-  color: white;
+  color: var(--text);
   font-family: 'JetBrains Mono', monospace;
 }
 
-/* Question Box - Wide Horizontal */
+.timer-container.warning .timer-value {
+  color: #ef4444;
+}
+
+/* Question Box */
 .question-box {
-  flex: 1;
-  background: var(--bg-input);
-  border-radius: var(--radius-md);
-  padding: 12px 16px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 60px;
+  min-height: 80px;
 }
 
 .question-text {
@@ -867,53 +969,57 @@ function getOptionIcon(index) {
 }
 
 .question-image {
-  max-width: 120px;
-  max-height: 60px;
-  border-radius: 4px;
-  margin-left: 12px;
+  max-width: 150px;
+  max-height: 80px;
+  border-radius: var(--radius-md);
+  margin-top: 10px;
 }
 
 /* Stats Row - Horizontal Badges */
-.stats-column {
+.stats-row {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
 .stat-badge {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
+  padding: 8px 12px;
   border-radius: var(--radius-md);
+  min-width: 50px;
 }
 
 .stat-badge .stat-number {
-  font-size: 0.9rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 800;
   color: white;
+  line-height: 1;
 }
 
 .stat-badge .stat-label {
-  font-size: 0.6rem;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.5rem;
+  color: rgba(255, 255, 255, 0.85);
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
 }
 
 .question-badge {
   background: var(--mario-blue);
-  box-shadow: 0 2px 0 #037bb5;
+  box-shadow: 0 3px 0 #037bb5;
 }
 
 .score-badge {
   background: #f59e0b;
-  box-shadow: 0 2px 0 #d97706;
+  box-shadow: 0 3px 0 #d97706;
 }
 
 .players-badge {
   background: #10b981;
-  box-shadow: 0 2px 0 #059669;
+  box-shadow: 0 3px 0 #059669;
 }
 
 /* ==========================================
@@ -1102,29 +1208,38 @@ function getOptionIcon(index) {
     padding: 8px;
   }
 
-  .top-section {
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 10px 12px;
+  .game-header-bar {
+    padding: 8px 12px;
   }
 
-  .question-box {
-    order: 3;
-    width: 100%;
-    min-height: 50px;
-  }
-
-  .timer-circle {
-    width: 42px;
-    height: 42px;
+  .timer-container {
+    width: 48px;
+    height: 48px;
   }
 
   .timer-value {
     font-size: 1rem;
   }
 
-  .stats-column {
-    margin-left: auto;
+  .question-section {
+    padding: 12px;
+  }
+
+  .stats-row {
+    gap: 6px;
+  }
+
+  .stat-badge {
+    padding: 6px 8px;
+    min-width: 42px;
+  }
+
+  .stat-badge .stat-number {
+    font-size: 0.85rem;
+  }
+
+  .stat-badge .stat-label {
+    font-size: 0.45rem;
   }
 
   .options-grid-2x2 {

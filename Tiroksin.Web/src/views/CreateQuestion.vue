@@ -1,14 +1,8 @@
 <template>
   <div class="create-question">
     <div class="form-container">
-      <!-- Header -->
-      <div class="form-header">
-        <div class="header-icon">📝</div>
-        <h1 class="form-title">Yeni Soru Ekle</h1>
-      </div>
-
-      <!-- Form Card -->
-      <div class="form-card">
+      <!-- Form Card with MarioDiv -->
+      <MarioDiv color="white" icon="📝" title="Yeni Soru Ekle">
         <!-- Kategori Secimi -->
         <div class="form-section">
           <div class="category-grid">
@@ -147,7 +141,7 @@
             Onaya Gönder
           </MarioButton>
         </div>
-      </div>
+      </MarioDiv>
     </div>
 
     <!-- Editor Modal -->
@@ -196,6 +190,7 @@ import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import MarioButton from '../components/MarioButton.vue'
 import MarioSelect from '../components/MarioSelect.vue'
+import MarioDiv from '../components/MarioDiv.vue'
 
 const router = useRouter()
 const loading = ref(false)
@@ -356,42 +351,6 @@ const handleSubmit = async () => {
 .form-container {
   max-width: 800px;
   margin: 0 auto;
-}
-
-/* Header */
-.form-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 24px;
-}
-
-.header-icon {
-  font-size: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  background: var(--mario-blue);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 4px 0 #037bb5;
-}
-
-.form-title {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--text);
-  margin: 0;
-}
-
-/* Form Card */
-.form-card {
-  background: var(--bg-card);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-xl);
-  padding: 28px;
-  box-shadow: var(--shadow-lg);
 }
 
 /* Form Section */

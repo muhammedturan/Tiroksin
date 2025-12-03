@@ -137,28 +137,31 @@ public class GetGameSessionQueryHandler : IRequestHandler<GetGameSessionQuery, G
         List<PlayerResultDto>? results = null;
         if (gameSession.Status == RoomStatus.Finished)
         {
-            results = gameSession.Players
+            // Calculate ranks dynamically based on score (don't rely on stored Rank value)
+            var rankedPlayers = gameSession.Players
                 .OrderByDescending(p => p.Score)
                 .ThenBy(p => p.IsEliminated)
                 .ThenBy(p => p.EliminatedAtQuestionIndex ?? int.MaxValue)
-                .Select((p, index) => new PlayerResultDto
-                {
-                    UserId = p.UserId,
-                    Username = p.User?.Username ?? "Unknown",
-                    Avatar = p.User?.Avatar ?? "👤",
-                    Rank = p.Rank,
-                    Score = p.Score,
-                    CorrectAnswers = p.CorrectAnswers,
-                    WrongAnswers = p.WrongAnswers,
-                    UnansweredCount = p.TimeoutCount,
-                    TotalTimeSpent = 0,
-                    AverageTimePerQuestion = 0,
-                    XpEarned = 0,
-                    NewLevel = 0,
-                    NewXp = 0,
-                    IsWinner = p.IsWinner,
-                    AchievementsUnlocked = new List<string>()
-                }).ToList();
+                .ToList();
+
+            results = rankedPlayers.Select((p, index) => new PlayerResultDto
+            {
+                UserId = p.UserId,
+                Username = p.User?.Username ?? "Unknown",
+                Avatar = p.User?.Avatar ?? "👤",
+                Rank = index + 1, // Calculate rank from sorted order
+                Score = p.Score,
+                CorrectAnswers = p.CorrectAnswers,
+                WrongAnswers = p.WrongAnswers,
+                UnansweredCount = p.TimeoutCount,
+                TotalTimeSpent = 0,
+                AverageTimePerQuestion = 0,
+                XpEarned = 0,
+                NewLevel = 0,
+                NewXp = 0,
+                IsWinner = index == 0 && !p.IsEliminated, // First non-eliminated player is winner
+                AchievementsUnlocked = new List<string>()
+            }).ToList();
         }
 
         // Calculate remaining time (60 seconds per question)
