@@ -31,9 +31,18 @@ public class ParameterValueConfiguration : IEntityTypeConfiguration<ParameterVal
             .IsRequired()
             .HasColumnName("order_no");
 
+        builder.Property(pv => pv.ParentValueId)
+            .HasColumnName("parent_value_id");
+
         builder.Property(pv => pv.CreatedAt).HasColumnName("created_at");
         builder.Property(pv => pv.UpdatedAt).HasColumnName("updated_at");
         builder.Property(pv => pv.UpdatedBy).HasColumnName("updated_by");
+
+        // Self-referencing relationship for parent-child values
+        builder.HasOne(pv => pv.ParentValue)
+            .WithMany(pv => pv.ChildValues)
+            .HasForeignKey(pv => pv.ParentValueId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Note: Relationship and unique constraint already configured in ApplicationDbContext
     }

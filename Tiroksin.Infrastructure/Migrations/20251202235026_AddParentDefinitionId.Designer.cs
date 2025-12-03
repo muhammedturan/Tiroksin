@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Tiroksin.Infrastructure.Data;
@@ -11,9 +12,11 @@ using Tiroksin.Infrastructure.Data;
 namespace Tiroksin.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251202235026_AddParentDefinitionId")]
+    partial class AddParentDefinitionId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -385,102 +388,99 @@ namespace Tiroksin.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("00000001-1111-1111-1111-111111111111"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(221),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3423),
                             DataType = "int",
                             DefaultValue = "60",
                             Description = "Her soru için verilen süre (saniye cinsinden)",
                             IsRequired = false,
                             Key = "QUESTION_TIME",
                             Name = "Soru Başına Süre",
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(222),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3424),
                             ValidationRules = "{\"min\": 10, \"max\": 300}"
                         },
                         new
                         {
                             Id = new Guid("00000002-2222-2222-2222-222222222222"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(229),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3429),
                             DataType = "string",
                             Description = "Sorunun ait olduğu kategori (örn: Matematik, Fizik, Kimya)",
                             IsRequired = false,
                             Key = "CATEGORY",
                             Name = "Kategori",
-                            ParentDefinitionId = new Guid("00000009-9999-9999-9999-999999999999"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(230),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3429),
                             ValidationRules = "{\"maxLength\": 100}"
                         },
                         new
                         {
                             Id = new Guid("00000003-3333-3333-3333-333333333333"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(235),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3433),
                             DataType = "string",
                             Description = "Sorunun ait olduğu konu (örn: Türev, Integral)",
                             IsRequired = false,
                             Key = "SUBJECT",
                             Name = "Konu",
-                            ParentDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(235),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3434),
                             ValidationRules = "{\"maxLength\": 200}"
                         },
                         new
                         {
                             Id = new Guid("00000004-4444-4444-4444-444444444444"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(318),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3437),
                             DataType = "string",
                             Description = "Sorunun ait olduğu alt konu",
                             IsRequired = false,
                             Key = "TOPIC",
                             Name = "Alt Konu",
-                            ParentDefinitionId = new Guid("00000003-3333-3333-3333-333333333333"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(319),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3437),
                             ValidationRules = "{\"maxLength\": 200}"
                         },
                         new
                         {
                             Id = new Guid("00000006-6666-6666-6666-666666666666"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(329),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3441),
                             DataType = "json",
                             DefaultValue = "[]",
                             Description = "Soru etiketleri (JSON array)",
                             IsRequired = false,
                             Key = "TAGS",
                             Name = "Etiketler",
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(330),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3441),
                             ValidationRules = "{\"type\": \"array\"}"
                         },
                         new
                         {
                             Id = new Guid("00000007-7777-7777-7777-777777777777"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(349),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3445),
                             DataType = "string",
                             Description = "Sorunun kaynağı (örn: TYT 2023, AYT 2022)",
                             IsRequired = false,
                             Key = "SOURCE",
                             Name = "Kaynak",
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(350),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3445),
                             ValidationRules = "{\"maxLength\": 100}"
                         },
                         new
                         {
                             Id = new Guid("00000008-8888-8888-8888-888888888888"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(354),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3457),
                             DataType = "int",
                             Description = "Sorunun ait olduğu sınav yılı",
                             IsRequired = false,
                             Key = "YEAR",
                             Name = "Yıl",
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(355),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3458),
                             ValidationRules = "{\"min\": 2000, \"max\": 2100}"
                         },
                         new
                         {
                             Id = new Guid("00000009-9999-9999-9999-999999999999"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(359),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3462),
                             DataType = "string",
                             Description = "Sorunun ait olduğu sınav tipi (LGS, TYT, AYT, KPSS vb.)",
                             IsRequired = false,
                             Key = "EXAM_TYPE",
                             Name = "Sınav Tipi",
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(359)
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3462)
                         });
                 });
 
@@ -513,10 +513,6 @@ namespace Tiroksin.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("parameter_definition_id");
 
-                    b.Property<Guid?>("ParentValueId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("parent_value_id");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -534,9 +530,6 @@ namespace Tiroksin.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_parameter_values");
 
-                    b.HasIndex("ParentValueId")
-                        .HasDatabaseName("ix_parameter_values_parent_value_id");
-
                     b.HasIndex("ParameterDefinitionId", "Value")
                         .IsUnique()
                         .HasDatabaseName("ix_parameter_values_parameter_definition_id_value");
@@ -546,318 +539,213 @@ namespace Tiroksin.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
+                            Id = new Guid("10000001-0001-0001-0001-000000000001"),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3502),
+                            Name = "Matematik",
+                            OrderNo = 1,
+                            ParameterDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3502),
+                            Value = "1"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000001-0001-0001-0001-000000000002"),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3506),
+                            Name = "Fizik",
+                            OrderNo = 2,
+                            ParameterDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3506),
+                            Value = "2"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000001-0001-0001-0001-000000000003"),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3509),
+                            Name = "Kimya",
+                            OrderNo = 3,
+                            ParameterDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3510),
+                            Value = "3"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000001-0001-0001-0001-000000000004"),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3513),
+                            Name = "Biyoloji",
+                            OrderNo = 4,
+                            ParameterDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3513),
+                            Value = "4"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000001-0001-0001-0001-000000000005"),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3516),
+                            Name = "Türkçe",
+                            OrderNo = 5,
+                            ParameterDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3517),
+                            Value = "5"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000002-0001-0001-0001-000000000001"),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3520),
+                            Name = "Temel Matematik",
+                            OrderNo = 1,
+                            ParameterDefinitionId = new Guid("00000003-3333-3333-3333-333333333333"),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3520),
+                            Value = "1"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000002-0001-0001-0001-000000000002"),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3526),
+                            Name = "Cebir",
+                            OrderNo = 2,
+                            ParameterDefinitionId = new Guid("00000003-3333-3333-3333-333333333333"),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3526),
+                            Value = "2"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000002-0001-0001-0001-000000000003"),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3529),
+                            Name = "Geometri",
+                            OrderNo = 3,
+                            ParameterDefinitionId = new Guid("00000003-3333-3333-3333-333333333333"),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3530),
+                            Value = "3"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000002-0001-0001-0001-000000000004"),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3533),
+                            Name = "Türev",
+                            OrderNo = 4,
+                            ParameterDefinitionId = new Guid("00000003-3333-3333-3333-333333333333"),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3533),
+                            Value = "4"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000002-0001-0001-0001-000000000005"),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3536),
+                            Name = "İntegral",
+                            OrderNo = 5,
+                            ParameterDefinitionId = new Guid("00000003-3333-3333-3333-333333333333"),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3537),
+                            Value = "5"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000003-0001-0001-0001-000000000001"),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3615),
+                            Name = "İşlem Önceliği",
+                            OrderNo = 1,
+                            ParameterDefinitionId = new Guid("00000004-4444-4444-4444-444444444444"),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3616),
+                            Value = "1"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000003-0001-0001-0001-000000000002"),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3619),
+                            Name = "İkinci Dereceden Denklemler",
+                            OrderNo = 2,
+                            ParameterDefinitionId = new Guid("00000004-4444-4444-4444-444444444444"),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3620),
+                            Value = "2"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000003-0001-0001-0001-000000000003"),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3623),
+                            Name = "Alan Hesaplama",
+                            OrderNo = 3,
+                            ParameterDefinitionId = new Guid("00000004-4444-4444-4444-444444444444"),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3623),
+                            Value = "3"
+                        },
+                        new
+                        {
                             Id = new Guid("10000004-0001-0001-0001-000000000001"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(414),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3626),
                             Name = "LGS",
                             OrderNo = 1,
                             ParameterDefinitionId = new Guid("00000009-9999-9999-9999-999999999999"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(415),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3626),
                             Value = "LGS"
                         },
                         new
                         {
                             Id = new Guid("10000004-0001-0001-0001-000000000002"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(419),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3632),
                             Name = "TYT",
                             OrderNo = 2,
                             ParameterDefinitionId = new Guid("00000009-9999-9999-9999-999999999999"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(419),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3632),
                             Value = "TYT"
                         },
                         new
                         {
                             Id = new Guid("10000004-0001-0001-0001-000000000003"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(423),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3635),
                             Name = "AYT",
                             OrderNo = 3,
                             ParameterDefinitionId = new Guid("00000009-9999-9999-9999-999999999999"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(424),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3636),
                             Value = "AYT"
                         },
                         new
                         {
                             Id = new Guid("10000004-0001-0001-0001-000000000004"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(431),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3639),
                             Name = "KPSS",
                             OrderNo = 4,
                             ParameterDefinitionId = new Guid("00000009-9999-9999-9999-999999999999"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(431),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3639),
                             Value = "KPSS"
                         },
                         new
                         {
-                            Id = new Guid("10000001-0001-0001-0001-000000000101"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(436),
-                            Name = "Matematik",
-                            OrderNo = 1,
-                            ParameterDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
-                            ParentValueId = new Guid("10000004-0001-0001-0001-000000000001"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(436),
-                            Value = "lgs_matematik"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000001-0001-0001-0001-000000000102"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(444),
-                            Name = "Fen Bilimleri",
-                            OrderNo = 2,
-                            ParameterDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
-                            ParentValueId = new Guid("10000004-0001-0001-0001-000000000001"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(444),
-                            Value = "lgs_fen"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000001-0001-0001-0001-000000000103"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(448),
-                            Name = "Türkçe",
-                            OrderNo = 3,
-                            ParameterDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
-                            ParentValueId = new Guid("10000004-0001-0001-0001-000000000001"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(449),
-                            Value = "lgs_turkce"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000001-0001-0001-0001-000000000104"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(454),
-                            Name = "Sosyal Bilgiler",
-                            OrderNo = 4,
-                            ParameterDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
-                            ParentValueId = new Guid("10000004-0001-0001-0001-000000000001"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(454),
-                            Value = "lgs_sosyal"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000001-0001-0001-0001-000000000105"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(458),
-                            Name = "İngilizce",
+                            Id = new Guid("10000004-0001-0001-0001-000000000005"),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3642),
+                            Name = "ALES",
                             OrderNo = 5,
-                            ParameterDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
-                            ParentValueId = new Guid("10000004-0001-0001-0001-000000000001"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(458),
-                            Value = "lgs_ingilizce"
+                            ParameterDefinitionId = new Guid("00000009-9999-9999-9999-999999999999"),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3643),
+                            Value = "ALES"
                         },
                         new
                         {
-                            Id = new Guid("10000001-0001-0001-0001-000000000106"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(462),
-                            Name = "Din Kültürü",
+                            Id = new Guid("10000004-0001-0001-0001-000000000006"),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3646),
+                            Name = "DGS",
                             OrderNo = 6,
-                            ParameterDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
-                            ParentValueId = new Guid("10000004-0001-0001-0001-000000000001"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(463),
-                            Value = "lgs_din"
+                            ParameterDefinitionId = new Guid("00000009-9999-9999-9999-999999999999"),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3646),
+                            Value = "DGS"
                         },
                         new
                         {
-                            Id = new Guid("10000001-0001-0001-0001-000000000201"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(467),
-                            Name = "Temel Matematik",
-                            OrderNo = 1,
-                            ParameterDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
-                            ParentValueId = new Guid("10000004-0001-0001-0001-000000000002"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(467),
-                            Value = "tyt_matematik"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000001-0001-0001-0001-000000000202"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(471),
-                            Name = "Fizik",
-                            OrderNo = 2,
-                            ParameterDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
-                            ParentValueId = new Guid("10000004-0001-0001-0001-000000000002"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(472),
-                            Value = "tyt_fizik"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000001-0001-0001-0001-000000000203"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(476),
-                            Name = "Kimya",
-                            OrderNo = 3,
-                            ParameterDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
-                            ParentValueId = new Guid("10000004-0001-0001-0001-000000000002"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(477),
-                            Value = "tyt_kimya"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000001-0001-0001-0001-000000000204"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(485),
-                            Name = "Biyoloji",
-                            OrderNo = 4,
-                            ParameterDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
-                            ParentValueId = new Guid("10000004-0001-0001-0001-000000000002"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(486),
-                            Value = "tyt_biyoloji"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000001-0001-0001-0001-000000000205"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(490),
-                            Name = "Türkçe",
-                            OrderNo = 5,
-                            ParameterDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
-                            ParentValueId = new Guid("10000004-0001-0001-0001-000000000002"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(490),
-                            Value = "tyt_turkce"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000001-0001-0001-0001-000000000206"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(495),
-                            Name = "Coğrafya",
-                            OrderNo = 6,
-                            ParameterDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
-                            ParentValueId = new Guid("10000004-0001-0001-0001-000000000002"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(496),
-                            Value = "tyt_cografya"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000001-0001-0001-0001-000000000207"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(499),
-                            Name = "Tarih",
+                            Id = new Guid("10000004-0001-0001-0001-000000000007"),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3650),
+                            Name = "YDS",
                             OrderNo = 7,
-                            ParameterDefinitionId = new Guid("00000002-2222-2222-2222-222222222222"),
-                            ParentValueId = new Guid("10000004-0001-0001-0001-000000000002"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(500),
-                            Value = "tyt_tarih"
+                            ParameterDefinitionId = new Guid("00000009-9999-9999-9999-999999999999"),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3650),
+                            Value = "YDS"
                         },
                         new
                         {
-                            Id = new Guid("10000002-0001-0001-0001-000000000101"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(504),
-                            Name = "Sayılar ve İşlemler",
-                            OrderNo = 1,
-                            ParameterDefinitionId = new Guid("00000003-3333-3333-3333-333333333333"),
-                            ParentValueId = new Guid("10000001-0001-0001-0001-000000000101"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(504),
-                            Value = "lgs_mat_sayilar"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000002-0001-0001-0001-000000000102"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(508),
-                            Name = "Cebir",
-                            OrderNo = 2,
-                            ParameterDefinitionId = new Guid("00000003-3333-3333-3333-333333333333"),
-                            ParentValueId = new Guid("10000001-0001-0001-0001-000000000101"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(508),
-                            Value = "lgs_mat_cebir"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000002-0001-0001-0001-000000000103"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(512),
-                            Name = "Geometri",
-                            OrderNo = 3,
-                            ParameterDefinitionId = new Guid("00000003-3333-3333-3333-333333333333"),
-                            ParentValueId = new Guid("10000001-0001-0001-0001-000000000101"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(513),
-                            Value = "lgs_mat_geometri"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000002-0001-0001-0001-000000000201"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(516),
-                            Name = "Temel Kavramlar",
-                            OrderNo = 1,
-                            ParameterDefinitionId = new Guid("00000003-3333-3333-3333-333333333333"),
-                            ParentValueId = new Guid("10000001-0001-0001-0001-000000000201"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(517),
-                            Value = "tyt_mat_temel"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000002-0001-0001-0001-000000000202"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(524),
-                            Name = "Cebir",
-                            OrderNo = 2,
-                            ParameterDefinitionId = new Guid("00000003-3333-3333-3333-333333333333"),
-                            ParentValueId = new Guid("10000001-0001-0001-0001-000000000201"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(524),
-                            Value = "tyt_mat_cebir"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000002-0001-0001-0001-000000000203"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(528),
-                            Name = "Geometri",
-                            OrderNo = 3,
-                            ParameterDefinitionId = new Guid("00000003-3333-3333-3333-333333333333"),
-                            ParentValueId = new Guid("10000001-0001-0001-0001-000000000201"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(528),
-                            Value = "tyt_mat_geometri"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000002-0001-0001-0001-000000000204"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(532),
-                            Name = "Olasılık ve İstatistik",
-                            OrderNo = 4,
-                            ParameterDefinitionId = new Guid("00000003-3333-3333-3333-333333333333"),
-                            ParentValueId = new Guid("10000001-0001-0001-0001-000000000201"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(532),
-                            Value = "tyt_mat_olasilik"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000003-0001-0001-0001-000000000101"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(537),
-                            Name = "Doğal Sayılar",
-                            OrderNo = 1,
-                            ParameterDefinitionId = new Guid("00000004-4444-4444-4444-444444444444"),
-                            ParentValueId = new Guid("10000002-0001-0001-0001-000000000101"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(537),
-                            Value = "lgs_mat_sayilar_dogal"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000003-0001-0001-0001-000000000102"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(542),
-                            Name = "Kesirler",
-                            OrderNo = 2,
-                            ParameterDefinitionId = new Guid("00000004-4444-4444-4444-444444444444"),
-                            ParentValueId = new Guid("10000002-0001-0001-0001-000000000101"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(542),
-                            Value = "lgs_mat_sayilar_kesir"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000003-0001-0001-0001-000000000201"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(546),
-                            Name = "Sayı Basamakları",
-                            OrderNo = 1,
-                            ParameterDefinitionId = new Guid("00000004-4444-4444-4444-444444444444"),
-                            ParentValueId = new Guid("10000002-0001-0001-0001-000000000201"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(546),
-                            Value = "tyt_mat_temel_sayi"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000003-0001-0001-0001-000000000202"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(550),
-                            Name = "Bölünebilme Kuralları",
-                            OrderNo = 2,
-                            ParameterDefinitionId = new Guid("00000004-4444-4444-4444-444444444444"),
-                            ParentValueId = new Guid("10000002-0001-0001-0001-000000000201"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(551),
-                            Value = "tyt_mat_temel_bolunebilme"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000003-0001-0001-0001-000000000203"),
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(555),
-                            Name = "EBOB-EKOK",
-                            OrderNo = 3,
-                            ParameterDefinitionId = new Guid("00000004-4444-4444-4444-444444444444"),
-                            ParentValueId = new Guid("10000002-0001-0001-0001-000000000201"),
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(555),
-                            Value = "tyt_mat_temel_ebob_ekok"
+                            Id = new Guid("10000004-0001-0001-0001-000000000008"),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3653),
+                            Name = "Diğer",
+                            OrderNo = 99,
+                            ParameterDefinitionId = new Guid("00000009-9999-9999-9999-999999999999"),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3653),
+                            Value = "OTHER"
                         });
                 });
 
@@ -953,7 +841,7 @@ namespace Tiroksin.Infrastructure.Migrations
                             AttemptCount = 0,
                             Category = "1",
                             CorrectCount = 0,
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(691),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3717),
                             CreatedBy = new Guid("cdce62f1-cdf8-4ca7-9e56-a5f85303cee6"),
                             ExamType = 0,
                             IsPublic = true,
@@ -963,7 +851,7 @@ namespace Tiroksin.Infrastructure.Migrations
                             Subject = "1",
                             Text = "5 + 3 x 2 işleminin sonucu kaçtır?",
                             Topic = "1",
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(692),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3717),
                             ViewCount = 0
                         },
                         new
@@ -972,7 +860,7 @@ namespace Tiroksin.Infrastructure.Migrations
                             AttemptCount = 0,
                             Category = "1",
                             CorrectCount = 0,
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(698),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3723),
                             CreatedBy = new Guid("cdce62f1-cdf8-4ca7-9e56-a5f85303cee6"),
                             ExamType = 0,
                             IsPublic = true,
@@ -982,7 +870,7 @@ namespace Tiroksin.Infrastructure.Migrations
                             Subject = "2",
                             Text = "x² - 4 = 0 denkleminin çözüm kümesi nedir?",
                             Topic = "2",
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(698),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3724),
                             ViewCount = 0
                         },
                         new
@@ -991,7 +879,7 @@ namespace Tiroksin.Infrastructure.Migrations
                             AttemptCount = 0,
                             Category = "1",
                             CorrectCount = 0,
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(702),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3728),
                             CreatedBy = new Guid("cdce62f1-cdf8-4ca7-9e56-a5f85303cee6"),
                             ExamType = 0,
                             IsPublic = true,
@@ -1001,7 +889,7 @@ namespace Tiroksin.Infrastructure.Migrations
                             Subject = "3",
                             Text = "Bir dikdörtgenin alanı 24 cm², kısa kenarı 4 cm ise uzun kenarı kaç cm'dir?",
                             Topic = "3",
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(703),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3728),
                             ViewCount = 0
                         });
                 });
@@ -1395,12 +1283,12 @@ namespace Tiroksin.Infrastructure.Migrations
                         {
                             Id = new Guid("cdce62f1-cdf8-4ca7-9e56-a5f85303cee6"),
                             Avatar = "👤",
-                            CreatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(58),
+                            CreatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3289),
                             DisplayName = "muhammed",
                             Email = "muhammedturan@yahoo.com",
                             PasswordHash = "$2a$11$K7sXL9VF.W8eQ4Qm7ybZwuPxHjVnZq3KvLmRcDfTgNhYjMpUvXsBC",
                             Theme = "dark",
-                            UpdatedAt = new DateTime(2025, 12, 3, 0, 17, 57, 533, DateTimeKind.Utc).AddTicks(59),
+                            UpdatedAt = new DateTime(2025, 12, 2, 23, 50, 25, 739, DateTimeKind.Utc).AddTicks(3290),
                             Username = "muhammedturan"
                         });
                 });
@@ -1674,15 +1562,7 @@ namespace Tiroksin.Infrastructure.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_parameter_values_parameter_definitions_parameter_definition");
 
-                    b.HasOne("Tiroksin.Domain.Entities.ParameterValue", "ParentValue")
-                        .WithMany("ChildValues")
-                        .HasForeignKey("ParentValueId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_parameter_values_parameter_values_parent_value_id");
-
                     b.Navigation("ParameterDefinition");
-
-                    b.Navigation("ParentValue");
                 });
 
             modelBuilder.Entity("Tiroksin.Domain.Entities.Question", b =>
@@ -1791,11 +1671,6 @@ namespace Tiroksin.Infrastructure.Migrations
                     b.Navigation("ChildDefinitions");
 
                     b.Navigation("Values");
-                });
-
-            modelBuilder.Entity("Tiroksin.Domain.Entities.ParameterValue", b =>
-                {
-                    b.Navigation("ChildValues");
                 });
 
             modelBuilder.Entity("Tiroksin.Domain.Entities.Question", b =>

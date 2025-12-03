@@ -8,12 +8,16 @@ public class CreateQuestionCommand : IRequest<Result<CreateQuestionResponse>>
 {
     public string Text { get; set; } = string.Empty;
     public ExamType ExamType { get; set; }
-    public Difficulty Difficulty { get; set; } = Difficulty.Medium;
     public Guid CreatedBy { get; set; }
     public OptionsLayout OptionsLayout { get; set; } = OptionsLayout.Vertical;
     public List<QuestionOptionDto> Options { get; set; } = new List<QuestionOptionDto>();
 
-    // Optional: Parameters for CATEGORY, SUBJECT, TOPIC, etc. will be stored via ParameterValue
+    // Category parameters - stored directly on Question entity
+    public string? Category { get; set; }
+    public string? Subject { get; set; }
+    public string? Topic { get; set; }
+
+    // Optional: Additional parameters for future use
     public Dictionary<string, string>? Parameters { get; set; }
 }
 

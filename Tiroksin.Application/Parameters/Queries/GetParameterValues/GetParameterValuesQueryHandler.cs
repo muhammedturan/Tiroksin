@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Tiroksin.Application.Parameters.Queries.GetParameterValues;
 
-public class GetParameterValuesQueryHandler : IRequestHandler<GetParameterValuesQuery, Result<List<ParameterValueDto>>>
+public class GetParameterValuesQueryHandler : IRequestHandler<GetParameterValuesQuery, Result<ParameterValuesResponseDto>>
 {
     private readonly IApplicationDbContext _context;
 
@@ -14,20 +14,50 @@ public class GetParameterValuesQueryHandler : IRequestHandler<GetParameterValues
         _context = context;
     }
 
-    public async Task<Result<List<ParameterValueDto>>> Handle(GetParameterValuesQuery query, CancellationToken cancellationToken)
+    public async Task<Result<ParameterValuesResponseDto>> Handle(GetParameterValuesQuery query, CancellationToken cancellationToken)
     {
-        // Get parameter definition by key
+        // Get parameter definition by key with parent
         var parameterDefinition = await _context.ParameterDefinitions
+            .Include(pd => pd.ParentDefinition)
             .FirstOrDefaultAsync(pd => pd.Key == query.ParameterKey, cancellationToken);
 
         if (parameterDefinition == null)
         {
-            return Result<List<ParameterValueDto>>.Fail($"Parameter definition '{query.ParameterKey}' not found");
+            return Result<ParameterValuesResponseDto>.Fail($"Parameter definition '{query.ParameterKey}' not found");
         }
 
-        // Get parameter values
-        var values = await _context.ParameterValues
-            .Where(pv => pv.ParameterDefinitionId == parameterDefinition.Id)
+        // Build query for parameter values
+        var valuesQuery = _context.ParameterValues
+            .Where(pv => pv.ParameterDefinitionId == parameterDefinition.Id);
+
+        // Filter by parent value if provided
+        if (!string.IsNullOrEmpty(query.ParentValue))
+        {
+            // Find the parent value's ID by its value string
+            var parentValueEntity = await _context.ParameterValues
+                .FirstOrDefaultAsync(pv => pv.Value == query.ParentValue, cancellationToken);
+
+            if (parentValueEntity != null)
+            {
+                valuesQuery = valuesQuery.Where(pv => pv.ParentValueId == parentValueEntity.Id);
+            }
+            else
+            {
+                // Parent value not found, return empty list
+                valuesQuery = valuesQuery.Where(pv => false);
+            }
+        }
+        else
+        {
+            // If no parent value provided, only return root values (no parent) for dependent parameters
+            // or all values for root parameters
+            if (parameterDefinition.ParentDefinitionId != null)
+            {
+                valuesQuery = valuesQuery.Where(pv => pv.ParentValueId == null);
+            }
+        }
+
+        var values = await valuesQuery
             .OrderBy(pv => pv.OrderNo)
             .Select(pv => new ParameterValueDto
             {
@@ -37,6 +67,13 @@ public class GetParameterValuesQueryHandler : IRequestHandler<GetParameterValues
             })
             .ToListAsync(cancellationToken);
 
-        return Result<List<ParameterValueDto>>.Ok(values);
+        var response = new ParameterValuesResponseDto
+        {
+            ParameterName = parameterDefinition.Name,
+            ParentParameterKey = parameterDefinition.ParentDefinition?.Key,
+            Values = values
+        };
+
+        return Result<ParameterValuesResponseDto>.Ok(response);
     }
 }

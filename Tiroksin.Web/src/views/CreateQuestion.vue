@@ -12,50 +12,32 @@
         <!-- Kategori Secimi -->
         <div class="form-section">
           <div class="category-grid">
-            <MarioSelect
-              v-model="form.subjectId"
-              label="Ders"
-              @change="onSubjectChange"
-            >
-              <option value="">-- Ders Seçin --</option>
-              <option v-for="subject in subjects" :key="subject.id" :value="subject.id">
-                {{ subject.name }}
-              </option>
-            </MarioSelect>
-
-            <MarioSelect
-              v-model="form.topicId"
-              label="Konu"
-              :disabled="!form.subjectId"
-            >
-              <option value="">-- Konu Seçin --</option>
-              <option v-for="topic in filteredTopics" :key="topic.id" :value="topic.id">
-                {{ topic.name }}
-              </option>
-            </MarioSelect>
-
+            <!-- 1. Sınav Tipi (Root - parent yok) -->
             <MarioSelect
               v-model="form.examType"
-              label="Sınav Tipi"
-            >
-              <option value="">-- Sınav Tipi --</option>
-              <option value="YksTyt">YKS - TYT</option>
-              <option value="YksAyt">YKS - AYT</option>
-              <option value="Lgs">LGS</option>
-              <option value="Kpss">KPSS</option>
-              <option value="Ales">ALES</option>
-              <option value="Dgs">DGS</option>
-              <option value="Custom">Özel/Diğer</option>
-            </MarioSelect>
+              parameter-key="EXAM_TYPE"
+            />
 
+            <!-- 2. Kategori (parent: examType) -->
             <MarioSelect
-              v-model="form.difficulty"
-              label="Zorluk"
-            >
-              <option value="Easy">Kolay</option>
-              <option value="Medium">Orta</option>
-              <option value="Hard">Zor</option>
-            </MarioSelect>
+              v-model="form.category"
+              parameter-key="CATEGORY"
+              :parent-value="form.examType"
+            />
+
+            <!-- 3. Konu (parent: category) -->
+            <MarioSelect
+              v-model="form.subject"
+              parameter-key="SUBJECT"
+              :parent-value="form.category"
+            />
+
+            <!-- 4. Alt Konu (parent: subject) -->
+            <MarioSelect
+              v-model="form.topic"
+              parameter-key="TOPIC"
+              :parent-value="form.subject"
+            />
           </div>
         </div>
 
@@ -117,25 +99,29 @@
               class="option-item"
               :class="{
                 'option-item--correct': option.isCorrect,
-                'option-item--filled': hasTextContent(option.text)
+                'option-item--filled': hasTextContent(option.text),
+                'option-item--horizontal': form.optionsLayout === 'Horizontal'
               }"
+              @click="form.optionsLayout === 'Horizontal' ? openOptionEditor(index) : null"
             >
               <button
                 type="button"
                 class="option-letter-btn"
                 :class="{ 'option-letter-btn--selected': option.isCorrect }"
-                @click="setCorrectAnswer(index)"
+                @click.stop="setCorrectAnswer(index)"
                 :title="option.isCorrect ? 'Doğru cevap' : 'Doğru cevap olarak işaretle'"
               >
                 {{ String.fromCharCode(65 + index) }}
               </button>
-              <div class="option-content" @click="openOptionEditor(index)">
+              <div v-if="form.optionsLayout !== 'Horizontal'" class="option-content" @click="openOptionEditor(index)">
                 <span v-if="hasTextContent(option.text)" v-html="option.text" class="option-text"></span>
                 <span v-else class="placeholder">Şık {{ String.fromCharCode(65 + index) }}...</span>
               </div>
-              <button class="edit-icon-btn" @click="openOptionEditor(index)" title="Düzenle">
+              <button v-if="form.optionsLayout !== 'Horizontal'" class="edit-icon-btn" @click="openOptionEditor(index)" title="Düzenle">
                 ✏️
               </button>
+              <!-- Horizontal mode: show fill status indicator -->
+              <span v-if="form.optionsLayout === 'Horizontal' && hasTextContent(option.text)" class="horizontal-fill-dot">●</span>
             </div>
           </div>
         </div>
@@ -203,7 +189,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api'
 import { QuillEditor } from '@vueup/vue-quill'
@@ -213,8 +199,6 @@ import MarioSelect from '../components/MarioSelect.vue'
 
 const router = useRouter()
 const loading = ref(false)
-const subjects = ref([])
-const topics = ref([])
 
 const currentUserId = 'cdce62f1-cdf8-4ca7-9e56-a5f85303cee6'
 
@@ -224,10 +208,10 @@ const editorToolbar = [
 ]
 
 const form = ref({
-  subjectId: '',
-  topicId: '',
+  category: '',
+  subject: '',
+  topic: '',
   examType: '',
-  difficulty: 'Medium',
   text: '',
   optionsLayout: 'Vertical',
   options: [
@@ -239,15 +223,6 @@ const form = ref({
   ]
 })
 
-const filteredTopics = computed(() => {
-  if (!form.value.subjectId) return []
-  return topics.value.filter(t => t.subjectId === form.value.subjectId)
-})
-
-const onSubjectChange = () => {
-  form.value.topicId = ''
-}
-
 // Modal state
 const showEditorModal = ref(false)
 const editorContent = ref('')
@@ -255,31 +230,6 @@ const editorTitle = ref('')
 const editorType = ref('')
 const editingOptionIndex = ref(-1)
 
-onMounted(async () => {
-  try {
-    subjects.value = [
-      { id: '11111111-1111-1111-1111-111111111111', name: 'Matematik' },
-      { id: '22222222-2222-2222-2222-222222222222', name: 'Fizik' },
-      { id: '33333333-3333-3333-3333-333333333333', name: 'Kimya' },
-      { id: '44444444-4444-4444-4444-444444444444', name: 'Biyoloji' }
-    ]
-
-    topics.value = [
-      { id: '11111111-1111-1111-1111-111111111112', subjectId: '11111111-1111-1111-1111-111111111111', name: 'Temel Matematik' },
-      { id: '11111111-1111-1111-1111-111111111113', subjectId: '11111111-1111-1111-1111-111111111111', name: 'Geometri' },
-      { id: '11111111-1111-1111-1111-111111111114', subjectId: '11111111-1111-1111-1111-111111111111', name: 'İntegral' },
-      { id: '22222222-2222-2222-2222-222222222223', subjectId: '22222222-2222-2222-2222-222222222222', name: 'Kuvvet ve Hareket' },
-      { id: '22222222-2222-2222-2222-222222222224', subjectId: '22222222-2222-2222-2222-222222222222', name: 'Elektrik' },
-      { id: '22222222-2222-2222-2222-222222222225', subjectId: '22222222-2222-2222-2222-222222222222', name: 'Optik' },
-      { id: '33333333-3333-3333-3333-333333333334', subjectId: '33333333-3333-3333-3333-333333333333', name: 'Atomun Yapısı' },
-      { id: '33333333-3333-3333-3333-333333333335', subjectId: '33333333-3333-3333-3333-333333333333', name: 'Organik Kimya' },
-      { id: '44444444-4444-4444-4444-444444444445', subjectId: '44444444-4444-4444-4444-444444444444', name: 'Hücre' },
-      { id: '44444444-4444-4444-4444-444444444446', subjectId: '44444444-4444-4444-4444-444444444444', name: 'Genetik' }
-    ]
-  } catch (error) {
-    console.error('Veriler yüklenemedi:', error)
-  }
-})
 
 const hasTextContent = (html) => {
   if (!html) return false
@@ -311,10 +261,8 @@ const canSubmit = computed(() => {
   const isCorrectAnswerFilled = correctOption && hasTextContent(correctOption.text)
 
   return (
-    form.value.subjectId &&
-    form.value.topicId &&
+    form.value.category &&
     form.value.examType &&
-    form.value.difficulty &&
     hasTextContent(form.value.text) &&
     filledOptionsCount.value >= 2 &&
     hasCorrectAnswer.value &&
@@ -378,10 +326,10 @@ const handleSubmit = async () => {
     const filledOptions = form.value.options.filter(opt => hasTextContent(opt.text))
 
     await api.post('/questions', {
-      subjectId: form.value.subjectId,
-      topicId: form.value.topicId,
+      category: form.value.category,
+      subject: form.value.subject,
+      topic: form.value.topic,
       examType: form.value.examType,
-      difficulty: form.value.difficulty,
       createdBy: currentUserId,
       text: form.value.text,
       optionsLayout: form.value.optionsLayout,
@@ -569,6 +517,7 @@ const handleSubmit = async () => {
 
 .options-grid--5col {
   grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
 }
 
 /* Option Item */
@@ -658,6 +607,37 @@ const handleSubmit = async () => {
 
 .option-item:hover .edit-icon-btn {
   opacity: 1;
+}
+
+/* Horizontal Mode - Compact cards */
+.option-item--horizontal {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 12px;
+  cursor: pointer;
+  min-height: 80px;
+  position: relative;
+}
+
+.option-item--horizontal .option-letter-btn {
+  min-width: 44px;
+  height: 44px;
+  font-size: 1.1rem;
+}
+
+.option-item--horizontal:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Fill indicator dot for horizontal mode */
+.horizontal-fill-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: var(--mario-green);
+  font-size: 0.6rem;
 }
 
 /* Warning Box */

@@ -3,6 +3,10 @@ import { ref, computed } from 'vue'
 import { roomService } from '../services/roomService'
 import signalrService from '../services/signalrService'
 
+// Sound for player join
+const pipeSound = new Audio('/sounds/pipe.wav')
+pipeSound.volume = 0.5
+
 export const useRoomStore = defineStore('room', () => {
   // State
   const rooms = ref([])
@@ -55,6 +59,7 @@ export const useRoomStore = defineStore('room', () => {
     signalrService.on('PlayerJoined', (data) => {
       console.log('👋 [Store] PlayerJoined received:', data)
       if (data.username) {
+        const currentUsername = localStorage.getItem('username')
         const exists = players.value.find(p => p.username === data.username)
         if (!exists) {
           players.value.push({
@@ -64,6 +69,12 @@ export const useRoomStore = defineStore('room', () => {
             isReady: false
           })
           console.log('✅ [Store] Player added:', data.username, 'Total:', players.value.length)
+
+          // Play pipe sound when someone else joins (not yourself)
+          if (data.username !== currentUsername) {
+            pipeSound.currentTime = 0
+            pipeSound.play().catch(err => console.log('Sound play failed:', err))
+          }
         }
       }
     })

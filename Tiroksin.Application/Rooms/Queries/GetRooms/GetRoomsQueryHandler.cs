@@ -57,7 +57,6 @@ public class GetRoomsQueryHandler : IRequestHandler<GetRoomsQuery, List<RoomDto>
                 TimePerQuestion = 60, // Always 60 seconds
                 CategoryName = null, // No categories in elimination mode
                 SubjectName = null, // No subjects in elimination mode
-                DifficultyLevel = null, // No difficulty filtering
                 HostUsername = r.Host.Username,
                 HostAvatar = r.Host.Avatar,
                 CreatedAt = r.CreatedAt

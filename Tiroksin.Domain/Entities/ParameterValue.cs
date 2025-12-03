@@ -28,6 +28,15 @@ public class ParameterValue : AuditEntity
     /// </summary>
     public int OrderNo { get; set; } = 0;
 
-    // Navigation property
+    /// <summary>
+    /// Parent value for hierarchical filtering (value-level hierarchy)
+    /// Example: "Matematik" category's ParentValueId points to "TYT" exam type value
+    /// This enables filtering: show only TYT-specific categories when TYT is selected
+    /// </summary>
+    public Guid? ParentValueId { get; set; }
+
+    // Navigation properties
     public virtual ParameterDefinition ParameterDefinition { get; set; } = null!;
+    public virtual ParameterValue? ParentValue { get; set; }
+    public virtual ICollection<ParameterValue> ChildValues { get; set; } = new List<ParameterValue>();
 }

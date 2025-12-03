@@ -51,7 +51,7 @@ public static class DataSeeder
                 UpdatedAt = DateTime.UtcNow
             },
 
-            // CATEGORY - Soru kategorisi
+            // CATEGORY - Soru kategorisi (parent: EXAM_TYPE)
             new ParameterDefinition
             {
                 Id = Guid.Parse("00000002-2222-2222-2222-222222222222"),
@@ -62,11 +62,12 @@ public static class DataSeeder
                 DefaultValue = null,
                 IsRequired = false,
                 ValidationRules = "{\"maxLength\": 100}",
+                ParentDefinitionId = Guid.Parse("00000009-9999-9999-9999-999999999999"), // EXAM_TYPE
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
 
-            // SUBJECT - Soru konusu
+            // SUBJECT - Soru konusu (parent: CATEGORY)
             new ParameterDefinition
             {
                 Id = Guid.Parse("00000003-3333-3333-3333-333333333333"),
@@ -77,11 +78,12 @@ public static class DataSeeder
                 DefaultValue = null,
                 IsRequired = false,
                 ValidationRules = "{\"maxLength\": 200}",
+                ParentDefinitionId = Guid.Parse("00000002-2222-2222-2222-222222222222"), // CATEGORY
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
 
-            // TOPIC - Alt konu
+            // TOPIC - Alt konu (parent: SUBJECT)
             new ParameterDefinition
             {
                 Id = Guid.Parse("00000004-4444-4444-4444-444444444444"),
@@ -92,21 +94,7 @@ public static class DataSeeder
                 DefaultValue = null,
                 IsRequired = false,
                 ValidationRules = "{\"maxLength\": 200}",
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            },
-
-            // DIFFICULTY - Zorluk seviyesi
-            new ParameterDefinition
-            {
-                Id = Guid.Parse("00000005-5555-5555-5555-555555555555"),
-                Key = "DIFFICULTY",
-                Name = "Zorluk Seviyesi",
-                Description = "Sorunun zorluk seviyesi (Kolay, Orta, Zor)",
-                DataType = "string",
-                DefaultValue = "Orta",
-                IsRequired = false,
-                ValidationRules = "{\"enum\": [\"Kolay\", \"Orta\", \"Zor\"]}",
+                ParentDefinitionId = Guid.Parse("00000003-3333-3333-3333-333333333333"), // SUBJECT
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
@@ -154,6 +142,21 @@ public static class DataSeeder
                 ValidationRules = "{\"min\": 2000, \"max\": 2100}",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
+            },
+
+            // EXAM_TYPE - Sınav tipi
+            new ParameterDefinition
+            {
+                Id = Guid.Parse("00000009-9999-9999-9999-999999999999"),
+                Key = "EXAM_TYPE",
+                Name = "Sınav Tipi",
+                Description = "Sorunun ait olduğu sınav tipi (LGS, TYT, AYT, KPSS vb.)",
+                DataType = "string",
+                DefaultValue = null,
+                IsRequired = false,
+                ValidationRules = null,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             }
         );
     }
@@ -166,15 +169,14 @@ public static class DataSeeder
                 Id = MathQ1Id,
                 Text = "5 + 3 x 2 işleminin sonucu kaçtır?",
                 ExamType = ExamType.YksTyt,
-                Difficulty = Difficulty.Easy,
                 CreatedBy = MuhammedUserId,
                 OptionsLayout = OptionsLayout.Vertical,
                 Status = QuestionStatus.Approved,
                 IsPublic = true,
                 Points = 2,
-                CategoryPr = "1", // Matematik
-                SubjectPr = "1", // Temel Matematik
-                TopicPr = "1", // İşlem Önceliği
+                Category = "1", // Matematik
+                Subject = "1", // Temel Matematik
+                Topic = "1", // İşlem Önceliği
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
@@ -183,15 +185,14 @@ public static class DataSeeder
                 Id = MathQ2Id,
                 Text = "x² - 4 = 0 denkleminin çözüm kümesi nedir?",
                 ExamType = ExamType.YksTyt,
-                Difficulty = Difficulty.Medium,
                 CreatedBy = MuhammedUserId,
                 OptionsLayout = OptionsLayout.Vertical,
                 Status = QuestionStatus.Approved,
                 IsPublic = true,
                 Points = 3,
-                CategoryPr = "1", // Matematik
-                SubjectPr = "2", // Cebir
-                TopicPr = "2", // İkinci Dereceden Denklemler
+                Category = "1", // Matematik
+                Subject = "2", // Cebir
+                Topic = "2", // İkinci Dereceden Denklemler
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
@@ -200,15 +201,14 @@ public static class DataSeeder
                 Id = MathQ3Id,
                 Text = "Bir dikdörtgenin alanı 24 cm², kısa kenarı 4 cm ise uzun kenarı kaç cm'dir?",
                 ExamType = ExamType.YksTyt,
-                Difficulty = Difficulty.Easy,
                 CreatedBy = MuhammedUserId,
                 OptionsLayout = OptionsLayout.Vertical,
                 Status = QuestionStatus.Approved,
                 IsPublic = true,
                 Points = 2,
-                CategoryPr = "1", // Matematik
-                SubjectPr = "3", // Geometri
-                TopicPr = "3", // Alan Hesaplama
+                Category = "1", // Matematik
+                Subject = "3", // Geometri
+                Topic = "3", // Alan Hesaplama
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             }
@@ -241,141 +241,367 @@ public static class DataSeeder
         );
     }
 
+    // EXAM_TYPE IDs
+    private static readonly Guid ExamTypeLgsId = Guid.Parse("10000004-0001-0001-0001-000000000001");
+    private static readonly Guid ExamTypeTytId = Guid.Parse("10000004-0001-0001-0001-000000000002");
+    private static readonly Guid ExamTypeAytId = Guid.Parse("10000004-0001-0001-0001-000000000003");
+
+    // LGS CATEGORY IDs
+    private static readonly Guid CategoryLgsMatId = Guid.Parse("10000001-0001-0001-0001-000000000101");
+    private static readonly Guid CategoryLgsFenId = Guid.Parse("10000001-0001-0001-0001-000000000102");
+    private static readonly Guid CategoryLgsTurkceId = Guid.Parse("10000001-0001-0001-0001-000000000103");
+    private static readonly Guid CategoryLgsSosyalId = Guid.Parse("10000001-0001-0001-0001-000000000104");
+    private static readonly Guid CategoryLgsIngilizceId = Guid.Parse("10000001-0001-0001-0001-000000000105");
+    private static readonly Guid CategoryLgsDinId = Guid.Parse("10000001-0001-0001-0001-000000000106");
+
+    // TYT CATEGORY IDs
+    private static readonly Guid CategoryTytMatId = Guid.Parse("10000001-0001-0001-0001-000000000201");
+    private static readonly Guid CategoryTytFizikId = Guid.Parse("10000001-0001-0001-0001-000000000202");
+    private static readonly Guid CategoryTytKimyaId = Guid.Parse("10000001-0001-0001-0001-000000000203");
+    private static readonly Guid CategoryTytBiyolojiId = Guid.Parse("10000001-0001-0001-0001-000000000204");
+    private static readonly Guid CategoryTytTurkceId = Guid.Parse("10000001-0001-0001-0001-000000000205");
+    private static readonly Guid CategoryTytCografyaId = Guid.Parse("10000001-0001-0001-0001-000000000206");
+    private static readonly Guid CategoryTytTarihId = Guid.Parse("10000001-0001-0001-0001-000000000207");
+
+    // LGS Matematik SUBJECT IDs
+    private static readonly Guid SubjectLgsMatSayilarId = Guid.Parse("10000002-0001-0001-0001-000000000101");
+    private static readonly Guid SubjectLgsMatCebirId = Guid.Parse("10000002-0001-0001-0001-000000000102");
+    private static readonly Guid SubjectLgsMatGeometriId = Guid.Parse("10000002-0001-0001-0001-000000000103");
+
+    // TYT Matematik SUBJECT IDs
+    private static readonly Guid SubjectTytMatTemelId = Guid.Parse("10000002-0001-0001-0001-000000000201");
+    private static readonly Guid SubjectTytMatCebirId = Guid.Parse("10000002-0001-0001-0001-000000000202");
+    private static readonly Guid SubjectTytMatGeometriId = Guid.Parse("10000002-0001-0001-0001-000000000203");
+    private static readonly Guid SubjectTytMatOlasilikId = Guid.Parse("10000002-0001-0001-0001-000000000204");
+
     public static void SeedParameterValues(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<ParameterValue>().HasData(
-            // CATEGORY values
+            // ========== EXAM_TYPE values (ROOT - no parent) ==========
             new ParameterValue
             {
-                Id = Guid.Parse("10000001-0001-0001-0001-000000000001"),
+                Id = ExamTypeLgsId,
+                ParameterDefinitionId = Guid.Parse("00000009-9999-9999-9999-999999999999"), // EXAM_TYPE
+                Value = "LGS",
+                Name = "LGS",
+                OrderNo = 1,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new ParameterValue
+            {
+                Id = ExamTypeTytId,
+                ParameterDefinitionId = Guid.Parse("00000009-9999-9999-9999-999999999999"), // EXAM_TYPE
+                Value = "TYT",
+                Name = "TYT",
+                OrderNo = 2,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new ParameterValue
+            {
+                Id = ExamTypeAytId,
+                ParameterDefinitionId = Guid.Parse("00000009-9999-9999-9999-999999999999"), // EXAM_TYPE
+                Value = "AYT",
+                Name = "AYT",
+                OrderNo = 3,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new ParameterValue
+            {
+                Id = Guid.Parse("10000004-0001-0001-0001-000000000004"),
+                ParameterDefinitionId = Guid.Parse("00000009-9999-9999-9999-999999999999"), // EXAM_TYPE
+                Value = "KPSS",
+                Name = "KPSS",
+                OrderNo = 4,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+
+            // ========== LGS CATEGORY values (ParentValueId = LGS) ==========
+            new ParameterValue
+            {
+                Id = CategoryLgsMatId,
                 ParameterDefinitionId = Guid.Parse("00000002-2222-2222-2222-222222222222"), // CATEGORY
-                Value = "1",
+                Value = "lgs_matematik",
                 Name = "Matematik",
                 OrderNo = 1,
+                ParentValueId = ExamTypeLgsId,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
             new ParameterValue
             {
-                Id = Guid.Parse("10000001-0001-0001-0001-000000000002"),
+                Id = CategoryLgsFenId,
                 ParameterDefinitionId = Guid.Parse("00000002-2222-2222-2222-222222222222"), // CATEGORY
-                Value = "2",
-                Name = "Fizik",
+                Value = "lgs_fen",
+                Name = "Fen Bilimleri",
                 OrderNo = 2,
+                ParentValueId = ExamTypeLgsId,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
             new ParameterValue
             {
-                Id = Guid.Parse("10000001-0001-0001-0001-000000000003"),
+                Id = CategoryLgsTurkceId,
                 ParameterDefinitionId = Guid.Parse("00000002-2222-2222-2222-222222222222"), // CATEGORY
-                Value = "3",
-                Name = "Kimya",
-                OrderNo = 3,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            },
-            new ParameterValue
-            {
-                Id = Guid.Parse("10000001-0001-0001-0001-000000000004"),
-                ParameterDefinitionId = Guid.Parse("00000002-2222-2222-2222-222222222222"), // CATEGORY
-                Value = "4",
-                Name = "Biyoloji",
-                OrderNo = 4,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            },
-            new ParameterValue
-            {
-                Id = Guid.Parse("10000001-0001-0001-0001-000000000005"),
-                ParameterDefinitionId = Guid.Parse("00000002-2222-2222-2222-222222222222"), // CATEGORY
-                Value = "5",
+                Value = "lgs_turkce",
                 Name = "Türkçe",
+                OrderNo = 3,
+                ParentValueId = ExamTypeLgsId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new ParameterValue
+            {
+                Id = CategoryLgsSosyalId,
+                ParameterDefinitionId = Guid.Parse("00000002-2222-2222-2222-222222222222"), // CATEGORY
+                Value = "lgs_sosyal",
+                Name = "Sosyal Bilgiler",
+                OrderNo = 4,
+                ParentValueId = ExamTypeLgsId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new ParameterValue
+            {
+                Id = CategoryLgsIngilizceId,
+                ParameterDefinitionId = Guid.Parse("00000002-2222-2222-2222-222222222222"), // CATEGORY
+                Value = "lgs_ingilizce",
+                Name = "İngilizce",
                 OrderNo = 5,
+                ParentValueId = ExamTypeLgsId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new ParameterValue
+            {
+                Id = CategoryLgsDinId,
+                ParameterDefinitionId = Guid.Parse("00000002-2222-2222-2222-222222222222"), // CATEGORY
+                Value = "lgs_din",
+                Name = "Din Kültürü",
+                OrderNo = 6,
+                ParentValueId = ExamTypeLgsId,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
 
-            // SUBJECT values
+            // ========== TYT CATEGORY values (ParentValueId = TYT) ==========
             new ParameterValue
             {
-                Id = Guid.Parse("10000002-0001-0001-0001-000000000001"),
-                ParameterDefinitionId = Guid.Parse("00000003-3333-3333-3333-333333333333"), // SUBJECT
-                Value = "1",
+                Id = CategoryTytMatId,
+                ParameterDefinitionId = Guid.Parse("00000002-2222-2222-2222-222222222222"), // CATEGORY
+                Value = "tyt_matematik",
                 Name = "Temel Matematik",
                 OrderNo = 1,
+                ParentValueId = ExamTypeTytId,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
             new ParameterValue
             {
-                Id = Guid.Parse("10000002-0001-0001-0001-000000000002"),
-                ParameterDefinitionId = Guid.Parse("00000003-3333-3333-3333-333333333333"), // SUBJECT
-                Value = "2",
-                Name = "Cebir",
+                Id = CategoryTytFizikId,
+                ParameterDefinitionId = Guid.Parse("00000002-2222-2222-2222-222222222222"), // CATEGORY
+                Value = "tyt_fizik",
+                Name = "Fizik",
                 OrderNo = 2,
+                ParentValueId = ExamTypeTytId,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
             new ParameterValue
             {
-                Id = Guid.Parse("10000002-0001-0001-0001-000000000003"),
-                ParameterDefinitionId = Guid.Parse("00000003-3333-3333-3333-333333333333"), // SUBJECT
-                Value = "3",
-                Name = "Geometri",
+                Id = CategoryTytKimyaId,
+                ParameterDefinitionId = Guid.Parse("00000002-2222-2222-2222-222222222222"), // CATEGORY
+                Value = "tyt_kimya",
+                Name = "Kimya",
                 OrderNo = 3,
+                ParentValueId = ExamTypeTytId,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
             new ParameterValue
             {
-                Id = Guid.Parse("10000002-0001-0001-0001-000000000004"),
-                ParameterDefinitionId = Guid.Parse("00000003-3333-3333-3333-333333333333"), // SUBJECT
-                Value = "4",
-                Name = "Türev",
+                Id = CategoryTytBiyolojiId,
+                ParameterDefinitionId = Guid.Parse("00000002-2222-2222-2222-222222222222"), // CATEGORY
+                Value = "tyt_biyoloji",
+                Name = "Biyoloji",
                 OrderNo = 4,
+                ParentValueId = ExamTypeTytId,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
             new ParameterValue
             {
-                Id = Guid.Parse("10000002-0001-0001-0001-000000000005"),
-                ParameterDefinitionId = Guid.Parse("00000003-3333-3333-3333-333333333333"), // SUBJECT
-                Value = "5",
-                Name = "İntegral",
+                Id = CategoryTytTurkceId,
+                ParameterDefinitionId = Guid.Parse("00000002-2222-2222-2222-222222222222"), // CATEGORY
+                Value = "tyt_turkce",
+                Name = "Türkçe",
                 OrderNo = 5,
+                ParentValueId = ExamTypeTytId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new ParameterValue
+            {
+                Id = CategoryTytCografyaId,
+                ParameterDefinitionId = Guid.Parse("00000002-2222-2222-2222-222222222222"), // CATEGORY
+                Value = "tyt_cografya",
+                Name = "Coğrafya",
+                OrderNo = 6,
+                ParentValueId = ExamTypeTytId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new ParameterValue
+            {
+                Id = CategoryTytTarihId,
+                ParameterDefinitionId = Guid.Parse("00000002-2222-2222-2222-222222222222"), // CATEGORY
+                Value = "tyt_tarih",
+                Name = "Tarih",
+                OrderNo = 7,
+                ParentValueId = ExamTypeTytId,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
 
-            // TOPIC values
+            // ========== LGS Matematik SUBJECT values ==========
             new ParameterValue
             {
-                Id = Guid.Parse("10000003-0001-0001-0001-000000000001"),
-                ParameterDefinitionId = Guid.Parse("00000004-4444-4444-4444-444444444444"), // TOPIC
-                Value = "1",
-                Name = "İşlem Önceliği",
+                Id = SubjectLgsMatSayilarId,
+                ParameterDefinitionId = Guid.Parse("00000003-3333-3333-3333-333333333333"), // SUBJECT
+                Value = "lgs_mat_sayilar",
+                Name = "Sayılar ve İşlemler",
                 OrderNo = 1,
+                ParentValueId = CategoryLgsMatId,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
             new ParameterValue
             {
-                Id = Guid.Parse("10000003-0001-0001-0001-000000000002"),
-                ParameterDefinitionId = Guid.Parse("00000004-4444-4444-4444-444444444444"), // TOPIC
-                Value = "2",
-                Name = "İkinci Dereceden Denklemler",
+                Id = SubjectLgsMatCebirId,
+                ParameterDefinitionId = Guid.Parse("00000003-3333-3333-3333-333333333333"), // SUBJECT
+                Value = "lgs_mat_cebir",
+                Name = "Cebir",
                 OrderNo = 2,
+                ParentValueId = CategoryLgsMatId,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
             new ParameterValue
             {
-                Id = Guid.Parse("10000003-0001-0001-0001-000000000003"),
-                ParameterDefinitionId = Guid.Parse("00000004-4444-4444-4444-444444444444"), // TOPIC
-                Value = "3",
-                Name = "Alan Hesaplama",
+                Id = SubjectLgsMatGeometriId,
+                ParameterDefinitionId = Guid.Parse("00000003-3333-3333-3333-333333333333"), // SUBJECT
+                Value = "lgs_mat_geometri",
+                Name = "Geometri",
                 OrderNo = 3,
+                ParentValueId = CategoryLgsMatId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+
+            // ========== TYT Matematik SUBJECT values ==========
+            new ParameterValue
+            {
+                Id = SubjectTytMatTemelId,
+                ParameterDefinitionId = Guid.Parse("00000003-3333-3333-3333-333333333333"), // SUBJECT
+                Value = "tyt_mat_temel",
+                Name = "Temel Kavramlar",
+                OrderNo = 1,
+                ParentValueId = CategoryTytMatId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new ParameterValue
+            {
+                Id = SubjectTytMatCebirId,
+                ParameterDefinitionId = Guid.Parse("00000003-3333-3333-3333-333333333333"), // SUBJECT
+                Value = "tyt_mat_cebir",
+                Name = "Cebir",
+                OrderNo = 2,
+                ParentValueId = CategoryTytMatId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new ParameterValue
+            {
+                Id = SubjectTytMatGeometriId,
+                ParameterDefinitionId = Guid.Parse("00000003-3333-3333-3333-333333333333"), // SUBJECT
+                Value = "tyt_mat_geometri",
+                Name = "Geometri",
+                OrderNo = 3,
+                ParentValueId = CategoryTytMatId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new ParameterValue
+            {
+                Id = SubjectTytMatOlasilikId,
+                ParameterDefinitionId = Guid.Parse("00000003-3333-3333-3333-333333333333"), // SUBJECT
+                Value = "tyt_mat_olasilik",
+                Name = "Olasılık ve İstatistik",
+                OrderNo = 4,
+                ParentValueId = CategoryTytMatId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+
+            // ========== TOPIC values for LGS Matematik/Sayılar ==========
+            new ParameterValue
+            {
+                Id = Guid.Parse("10000003-0001-0001-0001-000000000101"),
+                ParameterDefinitionId = Guid.Parse("00000004-4444-4444-4444-444444444444"), // TOPIC
+                Value = "lgs_mat_sayilar_dogal",
+                Name = "Doğal Sayılar",
+                OrderNo = 1,
+                ParentValueId = SubjectLgsMatSayilarId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new ParameterValue
+            {
+                Id = Guid.Parse("10000003-0001-0001-0001-000000000102"),
+                ParameterDefinitionId = Guid.Parse("00000004-4444-4444-4444-444444444444"), // TOPIC
+                Value = "lgs_mat_sayilar_kesir",
+                Name = "Kesirler",
+                OrderNo = 2,
+                ParentValueId = SubjectLgsMatSayilarId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+
+            // ========== TOPIC values for TYT Matematik/Temel Kavramlar ==========
+            new ParameterValue
+            {
+                Id = Guid.Parse("10000003-0001-0001-0001-000000000201"),
+                ParameterDefinitionId = Guid.Parse("00000004-4444-4444-4444-444444444444"), // TOPIC
+                Value = "tyt_mat_temel_sayi",
+                Name = "Sayı Basamakları",
+                OrderNo = 1,
+                ParentValueId = SubjectTytMatTemelId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new ParameterValue
+            {
+                Id = Guid.Parse("10000003-0001-0001-0001-000000000202"),
+                ParameterDefinitionId = Guid.Parse("00000004-4444-4444-4444-444444444444"), // TOPIC
+                Value = "tyt_mat_temel_bolunebilme",
+                Name = "Bölünebilme Kuralları",
+                OrderNo = 2,
+                ParentValueId = SubjectTytMatTemelId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new ParameterValue
+            {
+                Id = Guid.Parse("10000003-0001-0001-0001-000000000203"),
+                ParameterDefinitionId = Guid.Parse("00000004-4444-4444-4444-444444444444"), // TOPIC
+                Value = "tyt_mat_temel_ebob_ekok",
+                Name = "EBOB-EKOK",
+                OrderNo = 3,
+                ParentValueId = SubjectTytMatTemelId,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             }

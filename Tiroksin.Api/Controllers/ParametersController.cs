@@ -18,9 +18,13 @@ public class ParametersController : ControllerBase
     }
 
     [HttpGet("{parameterKey}/values")]
-    public async Task<IActionResult> GetParameterValues(string parameterKey)
+    public async Task<IActionResult> GetParameterValues(string parameterKey, [FromQuery] string? parentValue = null)
     {
-        var query = new GetParameterValuesQuery { ParameterKey = parameterKey.ToUpper() };
+        var query = new GetParameterValuesQuery
+        {
+            ParameterKey = parameterKey.ToUpper(),
+            ParentValue = parentValue
+        };
         var result = await _mediator.Send(query);
 
         if (!result.Success)

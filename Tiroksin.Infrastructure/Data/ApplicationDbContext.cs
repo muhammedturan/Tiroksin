@@ -88,6 +88,13 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             .HasIndex(pd => pd.Key)
             .IsUnique();
 
+        // Configure ParameterDefinition self-referencing relationship (parent-child hierarchy)
+        modelBuilder.Entity<ParameterDefinition>()
+            .HasOne(pd => pd.ParentDefinition)
+            .WithMany(pd => pd.ChildDefinitions)
+            .HasForeignKey(pd => pd.ParentDefinitionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Configure ParameterValue relationships
         modelBuilder.Entity<ParameterValue>()
             .HasOne(pv => pv.ParameterDefinition)

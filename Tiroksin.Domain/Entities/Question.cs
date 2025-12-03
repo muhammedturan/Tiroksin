@@ -12,12 +12,11 @@ public class Question : AuditEntity
 
     // Kategorizasyon
     public ExamType ExamType { get; set; } // Sınav tipi (YKS-TYT, LGS, vb.)
-    public Difficulty Difficulty { get; set; } = Difficulty.Medium; // Zorluk seviyesi
 
     // Parameters - stores references to ParameterDefinition values
-    public string? CategoryPr { get; set; } // Kategori parametresi (Matematik, Fizik, vb.)
-    public string? SubjectPr { get; set; } // Konu parametresi (Türev, Integral, vb.)
-    public string? TopicPr { get; set; } // Alt konu parametresi
+    public string? Category { get; set; } // Kategori (Matematik, Fizik, vb.)
+    public string? Subject { get; set; } // Konu (Türev, Integral, vb.)
+    public string? Topic { get; set; } // Alt konu
 
     // Durum
     public QuestionStatus Status { get; set; } = QuestionStatus.Pending; // Onay durumu

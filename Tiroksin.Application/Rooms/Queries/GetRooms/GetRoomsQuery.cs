@@ -27,7 +27,6 @@ public record RoomDto
     public int TimePerQuestion { get; init; }
     public string? CategoryName { get; init; }
     public string? SubjectName { get; init; }
-    public Difficulty? DifficultyLevel { get; init; }
     public string HostUsername { get; init; } = string.Empty;
     public string HostAvatar { get; init; } = string.Empty;
     public DateTime CreatedAt { get; init; }

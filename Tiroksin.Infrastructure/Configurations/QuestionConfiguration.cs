@@ -31,15 +31,10 @@ public class QuestionConfiguration : IEntityTypeConfiguration<Question>
             .HasColumnName("exam_type")
             .HasConversion<int>();
 
-        builder.Property(q => q.Difficulty)
-            .IsRequired()
-            .HasColumnName("difficulty")
-            .HasConversion<int>();
-
-        // Parameter columns
-        builder.Property(q => q.CategoryPr).HasColumnName("category_pr");
-        builder.Property(q => q.SubjectPr).HasColumnName("subject_pr");
-        builder.Property(q => q.TopicPr).HasColumnName("topic_pr");
+        // Parameter columns (db: _pr suffix, code: no suffix)
+        builder.Property(q => q.Category).HasColumnName("category_pr");
+        builder.Property(q => q.Subject).HasColumnName("subject_pr");
+        builder.Property(q => q.Topic).HasColumnName("topic_pr");
 
         builder.Property(q => q.Status)
             .IsRequired()

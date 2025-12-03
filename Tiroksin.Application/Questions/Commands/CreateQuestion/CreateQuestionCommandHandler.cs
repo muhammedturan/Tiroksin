@@ -22,32 +22,13 @@ public class CreateQuestionCommandHandler : IRequestHandler<CreateQuestionComman
         {
             Text = command.Text,
             ExamType = command.ExamType,
-            Difficulty = command.Difficulty,
             CreatedBy = command.CreatedBy,
             OptionsLayout = command.OptionsLayout,
-            Points = 0 // Dinamik hesaplanacak
+            Points = 0, // Dinamik hesaplanacak
+            Category = command.Category,
+            Subject = command.Subject,
+            Topic = command.Topic
         };
-
-        // Set parameter values directly from command if provided
-        if (command.Parameters != null && command.Parameters.Any())
-        {
-            foreach (var param in command.Parameters)
-            {
-                // Map parameter keys to Question properties
-                switch (param.Key)
-                {
-                    case "CATEGORY":
-                        question.CategoryPr = param.Value;
-                        break;
-                    case "SUBJECT":
-                        question.SubjectPr = param.Value;
-                        break;
-                    case "TOPIC":
-                        question.TopicPr = param.Value;
-                        break;
-                }
-            }
-        }
 
         _context.Questions.Add(question);
 

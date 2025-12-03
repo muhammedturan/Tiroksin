@@ -44,6 +44,14 @@ public class ParameterDefinition : AuditEntity
     /// </summary>
     public string? ValidationRules { get; set; }
 
-    // Navigation property
+    /// <summary>
+    /// Parent definition for hierarchical parameters
+    /// Example: CATEGORY's parent is EXAM_TYPE, SUBJECT's parent is CATEGORY
+    /// </summary>
+    public Guid? ParentDefinitionId { get; set; }
+
+    // Navigation properties
+    public virtual ParameterDefinition? ParentDefinition { get; set; }
+    public virtual ICollection<ParameterDefinition> ChildDefinitions { get; set; } = new List<ParameterDefinition>();
     public virtual ICollection<ParameterValue> Values { get; set; } = new List<ParameterValue>();
 }
