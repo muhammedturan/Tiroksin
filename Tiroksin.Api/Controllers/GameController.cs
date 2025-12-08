@@ -1,11 +1,13 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 using Tiroksin.Api.Hubs;
 using Tiroksin.Application.GameSessions.Commands.FinishGame;
 using Tiroksin.Application.GameSessions.Commands.SubmitAnswer;
+using Tiroksin.Application.GameSessions.Queries.GetActiveGameSession;
 using Tiroksin.Application.GameSessions.Queries.GetGameSession;
 using Tiroksin.Application.GameSessions.Queries.GetGameSessionPlayers;
 using Tiroksin.Application.Rooms.Commands.StartGame;
@@ -15,6 +17,7 @@ namespace Tiroksin.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[EnableRateLimiting("game")]
 public class GameController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -129,6 +132,43 @@ public class GameController : ControllerBase
         {
             _logger.LogError(ex, "Error getting game session: {SessionId}", sessionId);
             return StatusCode(500, new { message = "Oyun durumu alınırken bir hata oluştu" });
+        }
+    }
+
+    /// <summary>
+    /// Check if user has an active game session (for reconnection)
+    /// </summary>
+    [HttpGet("active-session")]
+    public async Task<ActionResult> GetActiveSession()
+    {
+        try
+        {
+            var userId = GetUserIdFromToken();
+
+            var query = new GetActiveGameSessionQuery
+            {
+                UserId = userId
+            };
+
+            var response = await _mediator.Send(query);
+
+            if (response == null)
+            {
+                return Ok(new { hasActiveSession = false });
+            }
+
+            return Ok(new
+            {
+                hasActiveSession = true,
+                gameSessionId = response.GameSessionId,
+                roomId = response.RoomId,
+                roomName = response.RoomName
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking active session for user");
+            return StatusCode(500, new { message = "Aktif oturum kontrolü yapılırken bir hata oluştu" });
         }
     }
 

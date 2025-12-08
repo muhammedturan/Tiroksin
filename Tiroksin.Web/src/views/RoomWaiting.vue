@@ -126,11 +126,10 @@
               </div>
               <div class="player-info">
                 <span class="player-name">{{ player.username }}</span>
-                <span class="player-status">Hazır</span>
-              </div>
-              <div class="ready-badge">
-                <span class="check-icon">✓</span>
-                Hazır
+                <span class="player-status">
+                  <span class="status-dot"></span>
+                  Hazır
+                </span>
               </div>
             </div>
           </div>
@@ -198,6 +197,7 @@ function getPlayerColorClass(index) {
 
 onMounted(async () => {
   setupGameStartingListener()
+  setupRoomClosedListener()
 
   if (roomStore.currentRoom) {
     console.log('Room already in store:', roomStore.currentRoom.roomCode)
@@ -224,7 +224,28 @@ onMounted(async () => {
 
 onUnmounted(() => {
   signalrService.offAll('GameStarting')
+  signalrService.offAll('RoomClosed')
+  signalrService.offAll('RoomExpired')
 })
+
+function setupRoomClosedListener() {
+  signalrService.on('RoomClosed', (data) => {
+    console.log('RoomClosed event received:', data)
+    handleRoomClosed(data.reason || 'Oda kapandı')
+  })
+
+  signalrService.on('RoomExpired', (data) => {
+    console.log('RoomExpired event received:', data)
+    handleRoomClosed('Odanın süresi doldu')
+  })
+}
+
+function handleRoomClosed(message) {
+  localStorage.removeItem('currentRoomCode')
+  roomStore.clearRoom()
+  toastStore.warning(message)
+  router.push('/')
+}
 
 function setupGameStartingListener() {
   console.log('Setting up GameStarting listener...')
@@ -815,30 +836,25 @@ function copyRoomCode() {
 }
 
 .player-status {
-  font-size: 0.7rem;
-  color: var(--mario-green);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.ready-badge {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  background: linear-gradient(135deg, var(--mario-green), #15803d);
-  border-radius: var(--radius-full);
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: white;
-  box-shadow: 0 3px 0 #166534;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--mario-green);
+  font-weight: 600;
 }
 
-.check-icon {
-  font-size: 0.8rem;
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--mario-green);
+  border-radius: 50%;
+  animation: statusPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.9); }
 }
 
 /* Slots Remaining */

@@ -36,7 +36,32 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     console.error('API Error:', error.response?.data || error.message)
-    return Promise.reject(error)
+
+    // Extract error message from response
+    const responseData = error.response?.data
+    let errorMessage = 'Bir hata oluştu'
+
+    if (responseData) {
+      // Handle our standard ApiResponse format
+      if (responseData.error?.message) {
+        errorMessage = responseData.error.message
+      }
+      // Handle direct message in response
+      else if (responseData.message) {
+        errorMessage = responseData.message
+      }
+      // Handle string response
+      else if (typeof responseData === 'string') {
+        errorMessage = responseData
+      }
+    }
+
+    // Create a new error with the extracted message
+    const enhancedError = new Error(errorMessage)
+    enhancedError.response = error.response
+    enhancedError.originalError = error
+
+    return Promise.reject(enhancedError)
   }
 )
 

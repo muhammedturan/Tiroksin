@@ -112,6 +112,12 @@ class SignalRService {
     this.connection.on('MessageReceived', (data) => this.emit('MessageReceived', data))
     this.connection.on('ReactionReceived', (data) => this.emit('ReactionReceived', data))
 
+    // Rejoin events
+    this.connection.on('RejoinSuccess', (data) => this.emit('RejoinSuccess', data))
+    this.connection.on('RejoinFailed', (data) => this.emit('RejoinFailed', data))
+    this.connection.on('PlayerReconnected', (data) => this.emit('PlayerReconnected', data))
+    this.connection.on('GameError', (data) => this.emit('GameError', data))
+
     // Connection events
     this.connection.onreconnecting((error) => {
       console.log('🔄 SignalR Reconnecting...', error)
@@ -199,6 +205,10 @@ class SignalRService {
 
   async playerReady(roomId, username, isReady) {
     return this.invokeWithRetry('PlayerReady', roomId, username, isReady)
+  }
+
+  async rejoinGame(roomId) {
+    return this.invokeWithRetry('RejoinGame', roomId)
   }
 
   get isConnected() {

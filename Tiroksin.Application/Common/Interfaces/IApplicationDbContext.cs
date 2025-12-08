@@ -21,6 +21,7 @@ public interface IApplicationDbContext
     DbSet<ParameterDefinition> ParameterDefinitions { get; }
     DbSet<ParameterValue> ParameterValues { get; }
     DbSet<Achievement> Achievements { get; }
+    DbSet<UserAchievement> UserAchievements { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

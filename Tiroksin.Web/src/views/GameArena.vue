@@ -95,7 +95,7 @@
       </div>
 
       <!-- Question Section -->
-      <MarioDiv color="blue" icon="❓" title="Soru" :badge="gameStore.currentQuestionIndex + 1" class="question-section">
+      <div class="question-card">
         <div class="question-box">
           <div class="question-text" v-html="getSafeQuestionText()"></div>
           <!-- Question Image (if exists) -->
@@ -106,7 +106,7 @@
             class="question-image"
           />
         </div>
-      </MarioDiv>
+      </div>
 
       <!-- Bottom Section: 2x2 Options Grid -->
       <div class="options-section">
@@ -951,6 +951,14 @@ function getOptionIcon(index) {
   color: #ef4444;
 }
 
+/* Question Card - Simple Dark Mode Friendly */
+.question-card {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+}
+
 /* Question Box */
 .question-box {
   display: flex;
@@ -1071,48 +1079,32 @@ function getOptionIcon(index) {
   overflow: hidden;
 }
 
-.kahoot-option.option-red {
-  background: #ef4444;
-  box-shadow: 0 3px 0 #dc2626;
-}
-
-.kahoot-option.option-blue {
-  background: #3b82f6;
-  box-shadow: 0 3px 0 #2563eb;
-}
-
-.kahoot-option.option-yellow {
-  background: #f59e0b;
-  box-shadow: 0 3px 0 #d97706;
-}
-
+.kahoot-option.option-red,
+.kahoot-option.option-blue,
+.kahoot-option.option-yellow,
 .kahoot-option.option-green {
-  background: #10b981;
-  box-shadow: 0 3px 0 #059669;
+  background: var(--bg-card);
+  box-shadow: 0 3px 0 var(--border);
+  color: var(--text);
+  border: 2px solid var(--border);
 }
 
 .kahoot-option:hover:not(:disabled) {
   transform: translateY(-2px);
-  filter: brightness(1.05);
+  border-color: var(--primary);
+  box-shadow: 0 5px 0 var(--border);
 }
-
-.kahoot-option:hover:not(:disabled).option-red { box-shadow: 0 5px 0 #dc2626; }
-.kahoot-option:hover:not(:disabled).option-blue { box-shadow: 0 5px 0 #2563eb; }
-.kahoot-option:hover:not(:disabled).option-yellow { box-shadow: 0 5px 0 #d97706; }
-.kahoot-option:hover:not(:disabled).option-green { box-shadow: 0 5px 0 #059669; }
 
 .kahoot-option:active:not(:disabled) {
   transform: translateY(1px);
+  box-shadow: 0 1px 0 var(--border);
 }
-
-.kahoot-option:active:not(:disabled).option-red { box-shadow: 0 1px 0 #dc2626; }
-.kahoot-option:active:not(:disabled).option-blue { box-shadow: 0 1px 0 #2563eb; }
-.kahoot-option:active:not(:disabled).option-yellow { box-shadow: 0 1px 0 #d97706; }
-.kahoot-option:active:not(:disabled).option-green { box-shadow: 0 1px 0 #059669; }
 
 .kahoot-option.selected {
   transform: translateY(1px) scale(0.99);
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4) !important;
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: 0 1px 0 var(--border) !important;
 }
 
 .kahoot-option.selected::after {
@@ -1122,13 +1114,13 @@ function getOptionIcon(index) {
   right: 6px;
   width: 20px;
   height: 20px;
-  background: white;
+  background: var(--primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.75rem;
-  color: var(--bg-main);
+  color: white;
   font-weight: 800;
   animation: checkPop 0.25s ease;
 }

@@ -22,12 +22,16 @@ public class SubmitAnswerCommandHandler : IRequestHandler<SubmitAnswerCommand, S
 
     public async Task<SubmitAnswerResponse> Handle(SubmitAnswerCommand request, CancellationToken cancellationToken)
     {
+        _logger.LogInformation("Answer submission started: User={UserId}, Session={SessionId}, Question={QuestionId}",
+            request.UserId, request.GameSessionId, request.QuestionId);
+
         // 1. Get game session
         var gameSession = await _context.GameSessions
             .FirstOrDefaultAsync(gs => gs.Id == request.GameSessionId, cancellationToken);
 
         if (gameSession == null)
         {
+            _logger.LogWarning("Answer rejected: Game session not found. Session={SessionId}", request.GameSessionId);
             return new SubmitAnswerResponse { Success = false, Message = "Oyun oturumu bulunamadı" };
         }
 
@@ -121,6 +125,15 @@ public class SubmitAnswerCommandHandler : IRequestHandler<SubmitAnswerCommand, S
 
         bool isEliminated = !isCorrect; // Wrong answer = eliminated
 
+        // Log answer evaluation details
+        _logger.LogInformation(
+            "Answer evaluated: User={UserId}, Correct={IsCorrect}, TimeSpent={TimeSpent}s, Points={Points}, " +
+            "BasePoints={BasePoints}, SpeedBonus={SpeedBonus}, Eliminated={Eliminated}",
+            request.UserId, isCorrect, timeSpent, pointsEarned,
+            isCorrect ? question.Points : 0,
+            isCorrect ? pointsEarned - question.Points : 0,
+            isEliminated);
+
         // 5. Save answer to DB
         var gameAnswer = new GameAnswer
         {
@@ -166,43 +179,50 @@ public class SubmitAnswerCommandHandler : IRequestHandler<SubmitAnswerCommand, S
         }
 
         // 9. Check if all active players have answered this question
-        var allPlayers = await _context.GameSessionPlayers
-            .Where(p => p.GameSessionId == request.GameSessionId)
-            .ToListAsync(cancellationToken);
-
-        var answersForThisQuestion = await _context.GameAnswers
-            .Where(a => a.GameSessionId == request.GameSessionId && a.QuestionId == request.QuestionId)
-            .Select(a => a.UserId)
-            .ToListAsync(cancellationToken);
-
-        // Count players who still need to answer:
-        // - Players who were NOT eliminated before this question started
-        // - This includes players who just got eliminated THIS round (they already submitted their answer)
-        // We check: players who were eliminated at a question index BEFORE current, should not be counted
+        // Use a single atomic query to prevent race conditions
         var currentQuestionIndex = gameSession.CurrentQuestionIndex;
-        int activePlayersCount = allPlayers.Count(p =>
-            !p.IsEliminated || // Not eliminated
-            (p.IsEliminated && p.EliminatedAtQuestionIndex == currentQuestionIndex)); // Or eliminated THIS round
 
-        bool allPlayersAnswered = answersForThisQuestion.Count >= activePlayersCount;
+        // Get counts in a single query to minimize race window
+        var playerCounts = await _context.GameSessionPlayers
+            .Where(p => p.GameSessionId == request.GameSessionId)
+            .GroupBy(p => 1) // Group all into one
+            .Select(g => new
+            {
+                TotalPlayers = g.Count(),
+                // Players who should answer this round (not eliminated before this question)
+                ActivePlayers = g.Count(p => !p.IsEliminated || p.EliminatedAtQuestionIndex == currentQuestionIndex),
+                RemainingPlayers = g.Count(p => !p.IsEliminated)
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        _logger.LogDebug("Answer check: {Answered}/{ActivePlayers} active players answered (total: {TotalPlayers})", answersForThisQuestion.Count, activePlayersCount, allPlayers.Count);
+        var answerCount = await _context.GameAnswers
+            .CountAsync(a => a.GameSessionId == request.GameSessionId && a.QuestionId == request.QuestionId, cancellationToken);
+
+        int activePlayersCount = playerCounts?.ActivePlayers ?? 0;
+        int remainingPlayersCount = playerCounts?.RemainingPlayers ?? 0;
+        bool allPlayersAnswered = answerCount >= activePlayersCount;
+
+        _logger.LogDebug("Answer check: {Answered}/{ActivePlayers} active players answered (total: {TotalPlayers})",
+            answerCount, activePlayersCount, playerCounts?.TotalPlayers ?? 0);
 
         // 10. If all players answered, handle game progression
         if (allPlayersAnswered)
         {
-            // Remaining players = those not eliminated
-            var remainingPlayers = allPlayers.Count(p => !p.IsEliminated);
-            _logger.LogDebug("All answered! Remaining players: {RemainingPlayers}", remainingPlayers);
+            _logger.LogDebug("All answered! Remaining players: {RemainingPlayers}", remainingPlayersCount);
 
-            if (remainingPlayers <= 1)
+            if (remainingPlayersCount <= 1)
             {
                 // Game finished - either one winner or everyone eliminated
                 gameSession.Status = RoomStatus.Finished;
                 gameSession.FinishedAt = DateTime.UtcNow;
 
+                // Fetch all players for ranking (only needed when game ends)
+                var allPlayersForRanking = await _context.GameSessionPlayers
+                    .Where(p => p.GameSessionId == request.GameSessionId)
+                    .ToListAsync(cancellationToken);
+
                 // Calculate rankings for ALL players based on score
-                var rankedPlayers = allPlayers
+                var rankedPlayers = allPlayersForRanking
                     .OrderByDescending(p => p.Score)
                     .ThenBy(p => p.IsEliminated) // Non-eliminated first
                     .ThenBy(p => p.EliminatedAtQuestionIndex ?? int.MaxValue) // Later elimination = better
@@ -214,9 +234,13 @@ public class SubmitAnswerCommandHandler : IRequestHandler<SubmitAnswerCommand, S
                     rankedPlayers[i].IsWinner = i == 0 && !rankedPlayers[i].IsEliminated;
                 }
 
-                if (remainingPlayers == 1)
+                if (remainingPlayersCount == 1)
                 {
-                    _logger.LogInformation("Game winner determined: {WinnerId}", rankedPlayers.First(p => p.IsWinner).UserId);
+                    var winner = rankedPlayers.FirstOrDefault(p => p.IsWinner);
+                    if (winner != null)
+                    {
+                        _logger.LogInformation("Game winner determined: {WinnerId}", winner.UserId);
+                    }
                 }
                 else
                 {

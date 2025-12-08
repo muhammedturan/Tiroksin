@@ -28,6 +28,11 @@ public class CreateRoomCommandHandler : IRequestHandler<CreateRoomCommand, Creat
         }
 
         // Create room (Elimination mode only, 60 seconds per question)
+        // Room expires based on game duration: (QuestionCount × 60 seconds) + 10 minutes buffer for waiting/loading
+        var timePerQuestion = 60; // seconds
+        var bufferMinutes = 10; // extra time for waiting room, loading, etc.
+        var gameDurationMinutes = (request.QuestionCount * timePerQuestion / 60) + bufferMinutes;
+
         var room = new Room
         {
             Id = Guid.NewGuid(),
@@ -42,7 +47,8 @@ public class CreateRoomCommandHandler : IRequestHandler<CreateRoomCommand, Creat
             PasswordHash = passwordHash,
             QuestionCount = request.QuestionCount,
             HostUserId = request.HostUserId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(gameDurationMinutes)
         };
 
         _context.Rooms.Add(room);

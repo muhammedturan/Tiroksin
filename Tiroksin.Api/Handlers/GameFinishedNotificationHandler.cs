@@ -25,37 +25,62 @@ public class GameFinishedNotificationHandler : INotificationHandler<GameFinished
 
     public async Task Handle(GameFinishedNotification notification, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Game session {GameSessionId} finished. Sending GameFinished event to room {RoomId}",
-            notification.GameSessionId, notification.RoomId);
+        try
+        {
+            _logger.LogInformation("Game session {GameSessionId} finished. Sending GameFinished event to room {RoomId}",
+                notification.GameSessionId, notification.RoomId);
 
-        // Get final results
-        var players = await _context.GameSessionPlayers
-            .Include(p => p.User)
-            .Where(p => p.GameSessionId == notification.GameSessionId)
-            .OrderByDescending(p => p.Score)
-            .ThenBy(p => p.EliminatedAtQuestionIndex)
-            .Select(p => new
-            {
-                userId = p.UserId,
-                username = p.User.Username,
-                avatar = p.User.Avatar ?? "👤",
-                score = p.Score,
-                correctAnswers = p.CorrectAnswers,
-                wrongAnswers = p.WrongAnswers,
-                isWinner = p.IsWinner,
-                rank = p.Rank,
-                isEliminated = p.IsEliminated,
-                eliminatedAtQuestionIndex = p.EliminatedAtQuestionIndex
-            })
-            .ToListAsync(cancellationToken);
+            // Get final results
+            var players = await _context.GameSessionPlayers
+                .Include(p => p.User)
+                .Where(p => p.GameSessionId == notification.GameSessionId)
+                .OrderByDescending(p => p.Score)
+                .ThenBy(p => p.EliminatedAtQuestionIndex)
+                .Select(p => new
+                {
+                    userId = p.UserId,
+                    username = p.User != null ? p.User.Username : "Unknown",
+                    avatar = p.User != null ? p.User.Avatar ?? "👤" : "👤",
+                    score = p.Score,
+                    correctAnswers = p.CorrectAnswers,
+                    wrongAnswers = p.WrongAnswers,
+                    isWinner = p.IsWinner,
+                    rank = p.Rank,
+                    isEliminated = p.IsEliminated,
+                    eliminatedAtQuestionIndex = p.EliminatedAtQuestionIndex
+                })
+                .ToListAsync(cancellationToken);
 
-        await _hubContext.Clients.Group(notification.RoomId.ToString())
-            .SendAsync("GameFinished", new
+            await _hubContext.Clients.Group(notification.RoomId.ToString())
+                .SendAsync("GameFinished", new
+                {
+                    message = "Oyun bitti!",
+                    gameSessionId = notification.GameSessionId,
+                    results = players,
+                    timestamp = DateTime.UtcNow
+                }, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending GameFinished event for session {SessionId}", notification.GameSessionId);
+
+            // Try to at least notify clients
+            try
             {
-                message = "Oyun bitti!",
-                gameSessionId = notification.GameSessionId,
-                results = players,
-                timestamp = DateTime.UtcNow
-            }, cancellationToken);
+                await _hubContext.Clients.Group(notification.RoomId.ToString())
+                    .SendAsync("GameFinished", new
+                    {
+                        message = "Oyun bitti!",
+                        gameSessionId = notification.GameSessionId,
+                        results = Array.Empty<object>(),
+                        error = "Sonuçlar yüklenirken bir hata oluştu",
+                        timestamp = DateTime.UtcNow
+                    }, cancellationToken);
+            }
+            catch (Exception notifyEx)
+            {
+                _logger.LogError(notifyEx, "Failed to notify clients about game finish error");
+            }
+        }
     }
 }

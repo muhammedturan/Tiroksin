@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 using Tiroksin.Application.Rooms.Commands.CreateRoom;
 using Tiroksin.Application.Rooms.Commands.JoinRoom;
@@ -12,6 +13,7 @@ namespace Tiroksin.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[EnableRateLimiting("room")]
 public class RoomsController : ControllerBase
 {
     private readonly IMediator _mediator;

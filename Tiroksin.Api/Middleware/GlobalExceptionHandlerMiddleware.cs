@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using Tiroksin.Application.Common.DTOs;
 
 namespace Tiroksin.Api.Middleware;
 
@@ -38,14 +39,17 @@ public class GlobalExceptionHandlerMiddleware
         var response = context.Response;
         response.ContentType = "application/json";
 
-        var errorResponse = new ErrorResponse();
+        string errorCode;
+        string errorMessage;
+        Dictionary<string, string[]>? details = null;
 
         switch (exception)
         {
             case FluentValidation.ValidationException fluentValidationEx:
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
-                errorResponse.Message = "Doğrulama hatası";
-                errorResponse.Errors = fluentValidationEx.Errors
+                errorCode = ErrorCodes.ValidationError;
+                errorMessage = "Doğrulama hatası";
+                details = fluentValidationEx.Errors
                     .GroupBy(e => e.PropertyName)
                     .ToDictionary(
                         g => g.Key,
@@ -55,49 +59,60 @@ public class GlobalExceptionHandlerMiddleware
 
             case ValidationException validationEx:
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
-                errorResponse.Message = validationEx.Message;
-                errorResponse.Errors = validationEx.Errors;
+                errorCode = ErrorCodes.ValidationError;
+                errorMessage = validationEx.Message;
+                details = validationEx.Errors;
                 break;
 
             case NotFoundException notFoundEx:
                 response.StatusCode = (int)HttpStatusCode.NotFound;
-                errorResponse.Message = notFoundEx.Message;
+                errorCode = ErrorCodes.NotFound;
+                errorMessage = notFoundEx.Message;
                 break;
 
             case UnauthorizedAccessException:
                 response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                errorResponse.Message = "Yetkisiz erişim";
+                errorCode = ErrorCodes.Unauthorized;
+                errorMessage = "Yetkisiz erişim";
                 break;
 
             case ForbiddenException:
                 response.StatusCode = (int)HttpStatusCode.Forbidden;
-                errorResponse.Message = "Bu işlem için yetkiniz yok";
+                errorCode = ErrorCodes.Forbidden;
+                errorMessage = "Bu işlem için yetkiniz yok";
                 break;
 
             case BusinessException businessEx:
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
-                errorResponse.Message = businessEx.Message;
+                errorCode = "BUSINESS_ERROR";
+                errorMessage = businessEx.Message;
                 break;
 
             default:
                 response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                errorResponse.Message = _env.IsDevelopment()
+                errorCode = ErrorCodes.InternalError;
+                errorMessage = _env.IsDevelopment()
                     ? exception.Message
                     : "Bir hata oluştu. Lütfen daha sonra tekrar deneyin.";
 
                 if (_env.IsDevelopment())
                 {
-                    errorResponse.StackTrace = exception.StackTrace;
+                    details = new Dictionary<string, string[]>
+                    {
+                        { "stackTrace", new[] { exception.StackTrace ?? "" } }
+                    };
                 }
                 break;
         }
+
+        var apiResponse = ApiResponse.Fail(errorMessage, errorCode, details);
 
         var jsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        var result = JsonSerializer.Serialize(errorResponse, jsonOptions);
+        var result = JsonSerializer.Serialize(apiResponse, jsonOptions);
         await response.WriteAsync(result);
     }
 }

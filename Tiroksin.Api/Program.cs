@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using FluentValidation;
 using Tiroksin.Api.Middleware;
 using Tiroksin.Api.Services;
@@ -7,6 +8,7 @@ using Tiroksin.Application.Common.Interfaces;
 using Tiroksin.Infrastructure.Data;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -94,6 +96,15 @@ builder.Services.AddValidatorsFromAssembly(typeof(Tiroksin.Application.Auth.Comm
 // Services
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<Tiroksin.Application.Common.Services.IXpService, Tiroksin.Application.Common.Services.XpService>();
+builder.Services.AddScoped<Tiroksin.Application.Common.Services.IAchievementService, Tiroksin.Application.Common.Services.AchievementService>();
+
+// Settings
+builder.Services.Configure<Tiroksin.Api.Settings.GameSettings>(builder.Configuration.GetSection(Tiroksin.Api.Settings.GameSettings.SectionName));
+builder.Services.Configure<Tiroksin.Api.Settings.RoomSettings>(builder.Configuration.GetSection(Tiroksin.Api.Settings.RoomSettings.SectionName));
+
+// Background Services
+builder.Services.AddHostedService<RoomCleanupService>();
+builder.Services.AddHostedService<GameTimeoutService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -127,6 +138,59 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 // SignalR
 builder.Services.AddSignalR();
+
+// Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Global policy - general API protection
+    options.AddFixedWindowLimiter("fixed", opt =>
+    {
+        opt.PermitLimit = 100;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 10;
+    });
+
+    // Strict policy for auth endpoints (login, register)
+    options.AddFixedWindowLimiter("auth", opt =>
+    {
+        opt.PermitLimit = 10;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueLimit = 0;
+    });
+
+    // Game actions policy (answer submission, etc.)
+    options.AddSlidingWindowLimiter("game", opt =>
+    {
+        opt.PermitLimit = 30;
+        opt.Window = TimeSpan.FromSeconds(10);
+        opt.SegmentsPerWindow = 2;
+        opt.QueueLimit = 5;
+    });
+
+    // Room operations policy
+    options.AddTokenBucketLimiter("room", opt =>
+    {
+        opt.TokenLimit = 20;
+        opt.ReplenishmentPeriod = TimeSpan.FromSeconds(10);
+        opt.TokensPerPeriod = 5;
+        opt.QueueLimit = 2;
+    });
+
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        await context.HttpContext.Response.WriteAsJsonAsync(new
+        {
+            error = "Çok fazla istek gönderildi. Lütfen biraz bekleyin.",
+            retryAfter = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter)
+                ? retryAfter.TotalSeconds
+                : 60
+        }, cancellationToken);
+    };
+});
 
 // CORS - Environment-based configuration
 builder.Services.AddCors(options =>
@@ -203,6 +267,7 @@ app.Use(async (context, next) =>
 
 app.UseStaticFiles();
 app.UseCors();
+app.UseRateLimiter();
 
 // Global exception handling
 app.UseGlobalExceptionHandler();

@@ -40,6 +40,25 @@ public class StartGameCommandHandler : IRequestHandler<StartGameCommand, StartGa
             return new StartGameResponse { Success = false, Message = $"En az {room.MinPlayers} oyuncu gerekli!" };
         }
 
+        // Check if there are enough approved questions for the game
+        var approvedQuestionCount = await _context.Questions
+            .CountAsync(q => q.Status == QuestionStatus.Approved, cancellationToken);
+
+        if (approvedQuestionCount == 0)
+        {
+            return new StartGameResponse { Success = false, Message = "Sistemde onaylanmış soru bulunmuyor!" };
+        }
+
+        if (approvedQuestionCount < room.QuestionCount)
+        {
+            return new StartGameResponse
+            {
+                Success = false,
+                Message = $"Sistemde yeterli soru yok! İstenen: {room.QuestionCount}, Mevcut: {approvedQuestionCount}. " +
+                          $"Lütfen soru sayısını {approvedQuestionCount} veya daha az olarak ayarlayın."
+            };
+        }
+
         // Select first random question
         var firstQuestion = await SelectRandomQuestionAsync(new List<Guid>(), cancellationToken);
         if (firstQuestion == null)

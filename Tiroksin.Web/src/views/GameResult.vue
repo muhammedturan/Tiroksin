@@ -24,53 +24,6 @@
       <div class="game-over-subtitle">{{ results.length }} oyuncu yarıştı</div>
     </div>
 
-    <!-- Podium for Top 3 -->
-    <div class="podium-section" v-if="topThree.length > 0">
-      <div class="podium-container">
-        <!-- 2nd Place -->
-        <div class="podium-spot second" v-if="topThree[1]">
-          <div class="podium-player">
-            <div class="player-crown">🥈</div>
-            <div class="player-avatar-large">{{ topThree[1].avatar || '👤' }}</div>
-            <div class="player-name">{{ topThree[1].username }}</div>
-            <div class="player-score-badge">{{ topThree[1].score }} puan</div>
-          </div>
-          <div class="podium-block silver">
-            <span class="podium-rank">2</span>
-          </div>
-        </div>
-
-        <!-- 1st Place (Winner) -->
-        <div class="podium-spot first" v-if="topThree[0]">
-          <div class="podium-player winner-glow">
-            <div class="player-crown">👑</div>
-            <div class="player-avatar-large">{{ topThree[0].avatar || '🏆' }}</div>
-            <div class="player-name">{{ topThree[0].username }}</div>
-            <div class="player-score-badge gold">{{ topThree[0].score }} puan</div>
-            <div class="winner-sparkles">
-              <span class="sparkle" v-for="n in 6" :key="n">✨</span>
-            </div>
-          </div>
-          <div class="podium-block gold">
-            <span class="podium-rank">1</span>
-          </div>
-        </div>
-
-        <!-- 3rd Place -->
-        <div class="podium-spot third" v-if="topThree[2]">
-          <div class="podium-player">
-            <div class="player-crown">🥉</div>
-            <div class="player-avatar-large">{{ topThree[2].avatar || '👤' }}</div>
-            <div class="player-name">{{ topThree[2].username }}</div>
-            <div class="player-score-badge">{{ topThree[2].score }} puan</div>
-          </div>
-          <div class="podium-block bronze">
-            <span class="podium-rank">3</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Your Result Banner (if you're in top 3) -->
     <MarioCard v-if="isWinner" color="yellow" showDeco class="winner-banner">
       <div class="winner-content">
@@ -122,9 +75,16 @@
           }"
         >
           <div class="item-rank">
-            <span v-if="result.isWinner" class="rank-icon">🏆</span>
-            <span v-else-if="result.rank === 2" class="rank-icon">🥈</span>
-            <span v-else-if="result.rank === 3" class="rank-icon">🥉</span>
+            <div v-if="result.isWinner || result.rank === 1" class="rank-medal gold">
+              <span class="medal-crown">👑</span>
+              <span class="medal-icon">🏆</span>
+            </div>
+            <div v-else-if="result.rank === 2" class="rank-medal silver">
+              <span class="medal-icon">🥈</span>
+            </div>
+            <div v-else-if="result.rank === 3" class="rank-medal bronze">
+              <span class="medal-icon">🥉</span>
+            </div>
             <span v-else-if="result.rank === 999" class="rank-icon skull">💀</span>
             <span v-else class="rank-number">{{ result.rank }}</span>
           </div>
@@ -155,21 +115,15 @@
       </MarioButton>
     </div>
 
-    <!-- Mario Decorations -->
-    <div class="mario-decorations">
-      <div class="brick-row top">
-        <div class="brick" v-for="n in 10" :key="n"></div>
+    <!-- Mario Decorations - Full Width Ground -->
+    <div class="mario-ground">
+      <!-- Question blocks row -->
+      <div class="question-blocks-row">
+        <div class="q-block" v-for="n in 20" :key="n">?</div>
       </div>
-      <div class="question-blocks">
-        <div class="q-block" v-for="n in 3" :key="n">?</div>
-      </div>
-      <div class="pipe left">
-        <div class="pipe-top"></div>
-        <div class="pipe-body"></div>
-      </div>
-      <div class="pipe right">
-        <div class="pipe-top"></div>
-        <div class="pipe-body"></div>
+      <!-- Brick row -->
+      <div class="brick-row">
+        <div class="brick" v-for="n in 50" :key="n"></div>
       </div>
     </div>
   </div>
@@ -200,12 +154,6 @@ const myResult = computed(() => {
 
 const isWinner = computed(() => {
   return myResult.value?.isWinner || false
-})
-
-const topThree = computed(() => {
-  return [...results.value]
-    .filter(r => r.rank !== 999 && r.rank <= 3)
-    .sort((a, b) => a.rank - b.rank)
 })
 
 const sortedResults = computed(() => {
@@ -462,182 +410,6 @@ function isMe(playerId) {
 }
 
 /* ==========================================
-   PODIUM SECTION
-   ========================================== */
-.podium-section {
-  margin-bottom: 32px;
-  position: relative;
-  z-index: 1;
-}
-
-.podium-container {
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  gap: 8px;
-  padding: 20px;
-}
-
-.podium-spot {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.podium-player {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 12px;
-  position: relative;
-}
-
-.winner-glow {
-  animation: winnerPulse 2s ease-in-out infinite;
-}
-
-@keyframes winnerPulse {
-  0%, 100% { filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.5)); }
-  50% { filter: drop-shadow(0 0 25px rgba(245, 158, 11, 0.8)); }
-}
-
-.player-crown {
-  font-size: 2rem;
-  margin-bottom: 4px;
-  animation: crownBounce 1s ease-in-out infinite;
-}
-
-@keyframes crownBounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-.player-avatar-large {
-  font-size: 2.5rem;
-  background: var(--bg-card);
-  border: 3px solid var(--border);
-  border-radius: 50%;
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.first .player-avatar-large {
-  width: 80px;
-  height: 80px;
-  font-size: 3rem;
-  border-color: #f59e0b;
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
-}
-
-.player-name {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text);
-  margin-top: 8px;
-  max-width: 100px;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-  text-align: center;
-}
-
-.player-score-badge {
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 4px 10px;
-  background: var(--bg-input);
-  border: 2px solid var(--border);
-  border-radius: 12px;
-  color: var(--text);
-  margin-top: 4px;
-}
-
-.player-score-badge.gold {
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  border-color: #d97706;
-  color: #78350f;
-}
-
-.winner-sparkles {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 120px;
-  height: 120px;
-  pointer-events: none;
-}
-
-.sparkle {
-  position: absolute;
-  font-size: 0.8rem;
-  animation: sparkle 1.5s ease-in-out infinite;
-}
-
-.sparkle:nth-child(1) { top: 0; left: 50%; animation-delay: 0s; }
-.sparkle:nth-child(2) { top: 20%; right: 0; animation-delay: 0.2s; }
-.sparkle:nth-child(3) { bottom: 20%; right: 0; animation-delay: 0.4s; }
-.sparkle:nth-child(4) { bottom: 0; left: 50%; animation-delay: 0.6s; }
-.sparkle:nth-child(5) { bottom: 20%; left: 0; animation-delay: 0.8s; }
-.sparkle:nth-child(6) { top: 20%; left: 0; animation-delay: 1s; }
-
-@keyframes sparkle {
-  0%, 100% { opacity: 0; transform: scale(0); }
-  50% { opacity: 1; transform: scale(1); }
-}
-
-.podium-block {
-  width: 90px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px 8px 0 0;
-  font-size: 1.5rem;
-  font-weight: 900;
-  color: white;
-  text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
-  position: relative;
-}
-
-.first .podium-block { width: 100px; }
-
-.podium-block::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 8px;
-  background: rgba(255,255,255,0.3);
-  border-radius: 8px 8px 0 0;
-}
-
-.podium-block.gold {
-  height: 120px;
-  background: linear-gradient(180deg, #fbbf24, #f59e0b);
-  box-shadow: 0 4px 0 #b45309;
-}
-
-.podium-block.silver {
-  height: 90px;
-  background: linear-gradient(180deg, #d1d5db, #9ca3af);
-  box-shadow: 0 4px 0 #6b7280;
-}
-
-.podium-block.bronze {
-  height: 70px;
-  background: linear-gradient(180deg, #f59e0b, #d97706);
-  box-shadow: 0 4px 0 #92400e;
-}
-
-.podium-rank {
-  font-size: 2rem;
-}
-
-/* ==========================================
    WINNER BANNER
    ========================================== */
 .winner-banner {
@@ -808,6 +580,41 @@ function isMe(playerId) {
   justify-content: center;
 }
 
+.rank-medal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.medal-crown {
+  font-size: 1rem;
+  position: absolute;
+  top: -14px;
+  animation: crownFloat 1.5s ease-in-out infinite;
+}
+
+@keyframes crownFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.medal-icon {
+  font-size: 1.5rem;
+}
+
+.rank-medal.gold {
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.5));
+}
+
+.rank-medal.silver {
+  filter: drop-shadow(0 0 6px rgba(156, 163, 175, 0.5));
+}
+
+.rank-medal.bronze {
+  filter: drop-shadow(0 0 6px rgba(217, 119, 6, 0.5));
+}
+
 .rank-icon {
   font-size: 1.5rem;
 }
@@ -915,137 +722,74 @@ function isMe(playerId) {
 }
 
 /* ==========================================
-   MARIO DECORATIONS
+   MARIO GROUND DECORATIONS - FULL WIDTH
    ========================================== */
-.mario-decorations {
+.mario-ground {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 100px;
   pointer-events: none;
   z-index: 0;
+}
+
+.question-blocks-row {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 4px;
+  flex-wrap: nowrap;
   overflow: hidden;
 }
 
-.brick-row {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 2px;
-}
-
-.brick {
-  width: 32px;
-  height: 16px;
-  background: linear-gradient(180deg, #c2410c, #9a3412);
-  border-radius: 2px;
-  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.2), inset 0 2px 0 rgba(255,255,255,0.1);
-}
-
-.question-blocks {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 60px;
-  opacity: 0.3;
-}
-
 .q-block {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(180deg, #fbbf24, #f59e0b);
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  background: linear-gradient(180deg, #fef3c7, #fbbf24);
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 900;
-  color: #78350f;
-  box-shadow: 0 3px 0 #b45309;
+  color: #92400e;
+  box-shadow: 0 2px 0 #b45309, inset 0 -2px 0 rgba(0,0,0,0.1);
   animation: qBlockBounce 2s ease-in-out infinite;
+  opacity: 0.85;
 }
 
-.q-block:nth-child(2) { animation-delay: 0.3s; }
-.q-block:nth-child(3) { animation-delay: 0.6s; }
+.q-block:nth-child(2n) { animation-delay: 0.2s; }
+.q-block:nth-child(3n) { animation-delay: 0.4s; }
+.q-block:nth-child(5n) { animation-delay: 0.6s; }
+.q-block:nth-child(7n) { animation-delay: 0.8s; }
 
 @keyframes qBlockBounce {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+  50% { transform: translateY(-3px); }
 }
 
-.pipe {
-  position: absolute;
-  bottom: 16px;
-  opacity: 0.3;
+.brick-row {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
 
-.pipe.left { left: 20px; }
-.pipe.right { right: 20px; }
-
-.pipe-top {
-  width: 48px;
-  height: 16px;
-  background: linear-gradient(180deg, #22c55e, #16a34a);
-  border-radius: 4px 4px 0 0;
-  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.2);
-}
-
-.pipe-body {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(90deg, #22c55e, #16a34a);
-  margin: 0 auto;
+.brick {
+  width: 28px;
+  height: 14px;
+  min-width: 28px;
+  background: linear-gradient(180deg, #c2410c, #9a3412);
+  border-radius: 2px;
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.2), inset 0 2px 0 rgba(255,255,255,0.1);
 }
 
 /* ==========================================
    RESPONSIVE DESIGN
    ========================================== */
 @media (max-width: 600px) {
-  .podium-container {
-    gap: 4px;
-    padding: 10px;
-  }
-
-  .podium-block {
-    width: 70px;
-  }
-
-  .first .podium-block {
-    width: 80px;
-  }
-
-  .podium-block.gold { height: 100px; }
-  .podium-block.silver { height: 75px; }
-  .podium-block.bronze { height: 55px; }
-
-  .player-avatar-large {
-    width: 50px;
-    height: 50px;
-    font-size: 1.8rem;
-  }
-
-  .first .player-avatar-large {
-    width: 64px;
-    height: 64px;
-    font-size: 2.2rem;
-  }
-
-  .player-name {
-    font-size: 0.75rem;
-    max-width: 70px;
-  }
-
-  .player-score-badge {
-    font-size: 0.65rem;
-    padding: 3px 8px;
-  }
-
   .leaderboard-item {
     grid-template-columns: 40px 36px 1fr auto;
     gap: 8px;
@@ -1060,8 +804,26 @@ function isMe(playerId) {
     letter-spacing: 2px;
   }
 
-  .mario-decorations {
-    display: none;
+  .q-block {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    font-size: 0.85rem;
+  }
+
+  .brick {
+    width: 24px;
+    height: 12px;
+    min-width: 24px;
+  }
+
+  .medal-crown {
+    font-size: 0.85rem;
+    top: -12px;
+  }
+
+  .medal-icon {
+    font-size: 1.3rem;
   }
 }
 

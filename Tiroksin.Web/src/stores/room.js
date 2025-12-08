@@ -256,6 +256,13 @@ export const useRoomStore = defineStore('room', () => {
     localStorage.removeItem('currentRoomCode')
   }
 
+  // Clear current room without resetting everything (for expired/closed rooms)
+  function clearRoom() {
+    currentRoom.value = null
+    players.value = []
+    localStorage.removeItem('currentRoomCode')
+  }
+
   return {
     // State
     rooms,
@@ -277,6 +284,7 @@ export const useRoomStore = defineStore('room', () => {
     addPlayer,
     removePlayer,
     updatePlayerStatus,
-    reset
+    reset,
+    clearRoom
   }
 })

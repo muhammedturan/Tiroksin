@@ -28,7 +28,7 @@ const { removeToast } = toastStore
 function getIcon(type) {
   switch (type) {
     case 'success': return '✓'
-    case 'error': return '✕'
+    case 'error': return '!'
     case 'warning': return '⚠'
     case 'info': return 'ℹ'
     default: return 'ℹ'

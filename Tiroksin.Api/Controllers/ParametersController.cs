@@ -2,12 +2,14 @@ using Tiroksin.Application.Parameters.Queries.GetParameterValues;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Tiroksin.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[EnableRateLimiting("fixed")]
 public class ParametersController : ControllerBase
 {
     private readonly IMediator _mediator;

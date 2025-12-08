@@ -33,6 +33,13 @@ public class UserStats : AuditEntity
     public int HighestScore { get; set; } = 0; // En yüksek skor
     public int FastestAnswerTime { get; set; } = 0; // En hızlı cevap (saniye)
 
+    // Achievement-specific stats
+    public int TotalWins { get; set; } = 0; // Total wins (same as TotalGamesWon, kept for clarity)
+    public int TotalScore { get; set; } = 0; // Total cumulative score
+    public int BestAccuracy { get; set; } = 0; // Best accuracy in a single game (0-100)
+    public int FastestAverageTime { get; set; } = 0; // Fastest average answer time in a game (seconds)
+    public int BestStreak { get; set; } = 0; // Best correct answer streak in a single game
+
     // Sıralama
     public int GlobalRank { get; set; } = 0; // Genel sıralama
     public int WeeklyRank { get; set; } = 0; // Haftalık sıralama

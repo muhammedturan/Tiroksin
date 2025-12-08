@@ -26,6 +26,34 @@ public class AllPlayersAnsweredNotificationHandler : INotificationHandler<AllPla
 
     public async Task Handle(AllPlayersAnsweredNotification notification, CancellationToken cancellationToken)
     {
+        try
+        {
+            await HandleInternalAsync(notification, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Critical error in AllPlayersAnsweredNotificationHandler for session {SessionId}",
+                notification.GameSessionId);
+
+            // Notify clients about the error so they don't stay stuck
+            try
+            {
+                await _hubContext.Clients.Group(notification.RoomId.ToString())
+                    .SendAsync("GameError", new
+                    {
+                        message = "Oyun ilerletilirken bir hata oluştu. Lütfen sayfayı yenileyin.",
+                        gameSessionId = notification.GameSessionId
+                    }, cancellationToken);
+            }
+            catch (Exception notifyEx)
+            {
+                _logger.LogError(notifyEx, "Failed to notify clients about error");
+            }
+        }
+    }
+
+    private async Task HandleInternalAsync(AllPlayersAnsweredNotification notification, CancellationToken cancellationToken)
+    {
         _logger.LogInformation("All players answered for question {QuestionId}. Session: {GameSessionId}",
             notification.QuestionId, notification.GameSessionId);
 
@@ -64,7 +92,41 @@ public class AllPlayersAnsweredNotificationHandler : INotificationHandler<AllPla
 
         if (availableQuestionIds.Count == 0)
         {
-            _logger.LogWarning("No more questions available - game should finish");
+            _logger.LogInformation("No more questions available - finishing game. Session: {GameSessionId}", notification.GameSessionId);
+
+            // Finish the game
+            gameSession.Status = RoomStatus.Finished;
+            gameSession.FinishedAt = DateTime.UtcNow;
+
+            // Calculate rankings for ALL players based on score
+            var allPlayers = await _context.GameSessionPlayers
+                .Where(p => p.GameSessionId == notification.GameSessionId)
+                .ToListAsync(cancellationToken);
+
+            var rankedPlayers = allPlayers
+                .OrderByDescending(p => p.Score)
+                .ThenBy(p => p.IsEliminated) // Non-eliminated first
+                .ThenBy(p => p.EliminatedAtQuestionIndex ?? int.MaxValue) // Later elimination = better
+                .ToList();
+
+            for (int i = 0; i < rankedPlayers.Count; i++)
+            {
+                rankedPlayers[i].Rank = i + 1;
+                rankedPlayers[i].IsWinner = i == 0 && !rankedPlayers[i].IsEliminated;
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            // Send GameFinished event
+            await _hubContext.Clients.Group(notification.RoomId.ToString())
+                .SendAsync("GameFinished", new
+                {
+                    gameSessionId = notification.GameSessionId,
+                    roomId = notification.RoomId,
+                    reason = "NoMoreQuestions"
+                }, cancellationToken);
+
+            _logger.LogInformation("Game finished due to no more questions. Session: {GameSessionId}", notification.GameSessionId);
             return;
         }
 
@@ -77,7 +139,39 @@ public class AllPlayersAnsweredNotificationHandler : INotificationHandler<AllPla
 
         if (nextQuestion == null)
         {
-            _logger.LogWarning("No more questions available - game should finish");
+            // This shouldn't happen since we already checked availableQuestionIds
+            // But handle it gracefully by finishing the game
+            _logger.LogWarning("Question not found after random selection - finishing game. Session: {GameSessionId}", notification.GameSessionId);
+
+            gameSession.Status = RoomStatus.Finished;
+            gameSession.FinishedAt = DateTime.UtcNow;
+
+            var allPlayersForFinish = await _context.GameSessionPlayers
+                .Where(p => p.GameSessionId == notification.GameSessionId)
+                .ToListAsync(cancellationToken);
+
+            var rankedForFinish = allPlayersForFinish
+                .OrderByDescending(p => p.Score)
+                .ThenBy(p => p.IsEliminated)
+                .ThenBy(p => p.EliminatedAtQuestionIndex ?? int.MaxValue)
+                .ToList();
+
+            for (int i = 0; i < rankedForFinish.Count; i++)
+            {
+                rankedForFinish[i].Rank = i + 1;
+                rankedForFinish[i].IsWinner = i == 0 && !rankedForFinish[i].IsEliminated;
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            await _hubContext.Clients.Group(notification.RoomId.ToString())
+                .SendAsync("GameFinished", new
+                {
+                    gameSessionId = notification.GameSessionId,
+                    roomId = notification.RoomId,
+                    reason = "NoMoreQuestions"
+                }, cancellationToken);
+
             return;
         }
 

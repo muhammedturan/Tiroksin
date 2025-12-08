@@ -36,7 +36,11 @@ public class GetRoomsQueryHandler : IRequestHandler<GetRoomsQuery, List<RoomDto>
 
         // Get active rooms (only Waiting - not InProgress, Finished, or Cancelled)
         // Players can only join rooms that haven't started yet
-        query = query.Where(r => r.Status == RoomStatus.Waiting);
+        // Also filter out expired rooms and empty rooms
+        var now = DateTime.UtcNow;
+        query = query.Where(r => r.Status == RoomStatus.Waiting
+            && r.ExpiresAt > now
+            && r.Players.Any(p => p.LeftAt == null));
 
         var rooms = await query
             .OrderByDescending(r => r.CreatedAt)

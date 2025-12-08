@@ -3,6 +3,7 @@ using Tiroksin.Infrastructure.Data;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace Tiroksin.Api.Controllers;
@@ -10,6 +11,7 @@ namespace Tiroksin.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[EnableRateLimiting("fixed")]
 public class QuestionsController : ControllerBase
 {
     private readonly IMediator _mediator;

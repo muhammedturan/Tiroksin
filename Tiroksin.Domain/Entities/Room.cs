@@ -30,6 +30,7 @@ public class Room : AuditEntity
     // Oyun Zamanlaması
     public DateTime? StartedAt { get; set; }
     public DateTime? FinishedAt { get; set; }
+    public DateTime ExpiresAt { get; set; } // Oda geçerlilik süresi (default: 2 saat)
 
     // Navigation Properties
     public virtual User Host { get; set; } = null!;
@@ -72,7 +73,8 @@ public class Room : AuditEntity
             MinPlayers = minPlayers,
             QuestionCount = questionCount,
             IsPublic = isPublic,
-            Status = RoomStatus.Waiting
+            Status = RoomStatus.Waiting,
+            ExpiresAt = DateTime.UtcNow.AddHours(2) // 2 saat sonra expire
         };
 
         if (!string.IsNullOrWhiteSpace(password))
@@ -85,9 +87,14 @@ public class Room : AuditEntity
     }
 
     /// <summary>
+    /// Oda süresi dolmuş mu kontrol et
+    /// </summary>
+    public bool IsExpired() => DateTime.UtcNow >= ExpiresAt;
+
+    /// <summary>
     /// Odaya oyuncu eklenebilir mi kontrol et
     /// </summary>
-    public bool CanJoin() => Status == RoomStatus.Waiting && GetActivePlayerCount() < MaxPlayers;
+    public bool CanJoin() => Status == RoomStatus.Waiting && !IsExpired() && GetActivePlayerCount() < MaxPlayers;
 
     /// <summary>
     /// Oyun başlatılabilir mi kontrol et

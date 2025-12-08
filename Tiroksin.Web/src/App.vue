@@ -1,15 +1,17 @@
 <script setup>
 import { onMounted, onUnmounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import Header from './components/Header.vue'
 import ToastContainer from './components/ToastContainer.vue'
 import signalrService from './services/signalrService'
+import api from './services/api'
 import { useRoomStore } from './stores/room'
 import { useGameStore } from './stores/game'
 import { useThemeStore } from './stores/theme'
 import { useToastStore } from './stores/toast'
 
 const route = useRoute()
+const router = useRouter()
 const roomStore = useRoomStore()
 const gameStore = useGameStore()
 const themeStore = useThemeStore()
@@ -31,8 +33,69 @@ onMounted(async () => {
   if (token) {
     await signalrService.connect(token)
     setupSignalRListeners()
+
+    // Wait for router to be ready before checking active session
+    // This ensures route.path is correctly resolved after page refresh
+    await router.isReady()
+
+    // Check for active game session (for reconnection after refresh)
+    await checkActiveSession()
   }
 })
+
+// Check if user has an active game session and offer to rejoin
+async function checkActiveSession() {
+  // Don't check if already on game pages
+  const currentPath = route.path
+  if (currentPath.startsWith('/game/') || currentPath.startsWith('/game-spectator/') || currentPath.startsWith('/game-result/')) {
+    return
+  }
+
+  try {
+    const response = await api.get('/game/active-session')
+    if (response.data.hasActiveSession) {
+      const { gameSessionId, roomId, roomName } = response.data
+      console.log('🔄 Active session found:', gameSessionId, 'in room:', roomName)
+
+      // Show toast notification asking to rejoin
+      toastStore.addToast({
+        type: 'info',
+        title: 'Aktif Oyun Bulundu',
+        message: `"${roomName}" odasında devam eden bir oyununuz var.`,
+        duration: 10000,
+        action: {
+          label: 'Oyuna Dön',
+          callback: () => rejoinActiveGame(roomId, gameSessionId)
+        }
+      })
+    }
+  } catch (error) {
+    // Silently fail - user might not have an active session
+    console.debug('No active session or error checking:', error.message)
+  }
+}
+
+// Rejoin an active game
+async function rejoinActiveGame(roomId, gameSessionId) {
+  try {
+    // First, ensure SignalR is connected
+    await signalrService.ensureConnected()
+
+    // Call RejoinGame on the hub
+    await signalrService.rejoinGame(roomId.toString())
+
+    // The RejoinSuccess event will handle navigation
+    console.log('🔄 Rejoin request sent for room:', roomId)
+  } catch (error) {
+    console.error('❌ Failed to rejoin game:', error)
+    toastStore.addToast({
+      type: 'error',
+      title: 'Bağlantı Hatası',
+      message: 'Oyuna yeniden bağlanılamadı.',
+      duration: 5000
+    })
+  }
+}
 
 onUnmounted(async () => {
   await signalrService.disconnect()
@@ -106,6 +169,62 @@ function setupSignalRListeners() {
 
   signalrService.on('GameFinished', (data) => {
     console.log('Game finished:', data)
+  })
+
+  // Rejoin events
+  signalrService.on('RejoinSuccess', (data) => {
+    console.log('🔄 RejoinSuccess:', data)
+
+    // Set game data in store
+    gameStore.gameSessionId = data.gameSessionId
+    gameStore.currentQuestionIndex = data.questionIndex || 0
+
+    // If player is eliminated, go to spectator mode
+    if (data.playerStatus?.isEliminated) {
+      console.log('👀 Player is eliminated, going to spectator mode')
+      router.push(`/game-spectator/${data.gameSessionId}`)
+    } else {
+      // Active player - go to game arena
+      console.log('🎮 Player is active, going to game arena')
+      router.push(`/game/${data.gameSessionId}`)
+    }
+
+    toastStore.addToast({
+      type: 'success',
+      title: 'Oyuna Bağlandı',
+      message: 'Oyuna başarıyla yeniden bağlandınız.',
+      duration: 3000
+    })
+  })
+
+  signalrService.on('RejoinFailed', (data) => {
+    console.log('❌ RejoinFailed:', data)
+    toastStore.addToast({
+      type: 'error',
+      title: 'Bağlantı Hatası',
+      message: data.message || 'Oyuna yeniden bağlanılamadı.',
+      duration: 5000
+    })
+  })
+
+  signalrService.on('PlayerReconnected', (data) => {
+    console.log('🔄 PlayerReconnected:', data)
+    toastStore.addToast({
+      type: 'info',
+      title: 'Oyuncu Bağlandı',
+      message: `${data.username} oyuna geri döndü.`,
+      duration: 3000
+    })
+  })
+
+  signalrService.on('GameError', (data) => {
+    console.log('❌ GameError:', data)
+    toastStore.addToast({
+      type: 'error',
+      title: 'Oyun Hatası',
+      message: data.message || 'Bir hata oluştu.',
+      duration: 5000
+    })
   })
 }
 </script>
