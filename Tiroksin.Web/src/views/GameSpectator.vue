@@ -30,26 +30,12 @@
           <p>Hazirlan!</p>
         </div>
 
-        <div v-else-if="gameStore.currentQuestion" class="question-card">
-          <div class="question-header">
-            <div class="question-text" v-html="getSafeQuestionText()"></div>
-          </div>
-
-          <div v-if="gameStore.currentQuestion.imageUrl" class="question-image-container">
-            <img :src="gameStore.currentQuestion.imageUrl" alt="Question Image" class="question-image" />
-          </div>
-
-          <div :class="getOptionsLayoutClass()">
-            <div
-              v-for="option in gameStore.currentQuestion.options"
-              :key="option.id"
-              class="option-display"
-            >
-              <span class="option-key">{{ option.optionKey }}</span>
-              <span class="option-text" v-html="getSafeOptionText(option.text)"></span>
-            </div>
-          </div>
-        </div>
+        <QuestionDisplay
+          v-else-if="gameStore.currentQuestion"
+          :question="gameStore.currentQuestion"
+          :show-options="true"
+          :interactive="false"
+        />
 
         <div v-else class="waiting-state">
           <div class="waiting-icon">⏳</div>
@@ -114,8 +100,8 @@ import { useGameStore } from '../stores/game'
 import { useRoomStore } from '../stores/room'
 import signalrService from '../services/signalrService'
 import api from '../services/api'
-import { sanitizeHtml } from '../utils/sanitize'
 import MarioCard from '../components/MarioCard.vue'
+import QuestionDisplay from '../components/QuestionDisplay.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -323,26 +309,6 @@ function isMe(userId) {
   return userId === localStorage.getItem('userId')
 }
 
-// XSS koruması için HTML temizleme fonksiyonları
-function getSafeQuestionText() {
-  return sanitizeHtml(gameStore.currentQuestion?.text || '')
-}
-
-function getSafeOptionText(text) {
-  return sanitizeHtml(text || '')
-}
-
-function getOptionsLayoutClass() {
-  const layout = gameStore.currentQuestion?.optionsLayout || 'Vertical'
-  switch (layout) {
-    case 'Grid':
-      return 'options-grid'
-    case 'Horizontal':
-      return 'options-horizontal'
-    default:
-      return 'options-vertical'
-  }
-}
 </script>
 
 <style scoped>
@@ -439,88 +405,6 @@ function getOptionsLayoutClass() {
 
 .banner-icon {
   font-size: 1.2rem;
-}
-
-.question-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 24px;
-}
-
-.question-header {
-  margin-bottom: 20px;
-}
-
-.question-text {
-  font-size: 1.15rem;
-  font-weight: 600;
-  line-height: 1.6;
-  color: var(--text);
-}
-
-.question-image-container {
-  margin: 16px 0;
-  text-align: center;
-}
-
-.question-image {
-  max-width: 100%;
-  max-height: 220px;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-
-/* Options Display (Read-only) */
-.options-vertical {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.options-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
-.options-horizontal {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px;
-}
-
-.option-display {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  background: var(--bg-card-light);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  opacity: 0.7;
-}
-
-.option-key {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 1rem;
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-
-.option-text {
-  flex: 1;
-  font-weight: 500;
-  font-size: 0.95rem;
-  color: var(--text-muted);
 }
 
 /* Waiting State */
@@ -716,14 +600,6 @@ function getOptionsLayoutClass() {
   .spectator-header {
     flex-direction: column;
     gap: 12px;
-  }
-
-  .question-card {
-    padding: 20px;
-  }
-
-  .question-text {
-    font-size: 1.05rem;
   }
 }
 

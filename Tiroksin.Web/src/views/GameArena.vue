@@ -95,18 +95,10 @@
       </div>
 
       <!-- Question Section -->
-      <div class="question-card">
-        <div class="question-box">
-          <div class="question-text" v-html="getSafeQuestionText()"></div>
-          <!-- Question Image (if exists) -->
-          <img
-            v-if="gameStore.currentQuestion.imageUrl"
-            :src="gameStore.currentQuestion.imageUrl"
-            alt="Question Image"
-            class="question-image"
-          />
-        </div>
-      </div>
+      <QuestionDisplay
+        :question="gameStore.currentQuestion"
+        :show-options="false"
+      />
 
       <!-- Bottom Section: 2x2 Options Grid -->
       <div class="options-section">
@@ -153,6 +145,7 @@ import { sanitizeHtml } from '../utils/sanitize'
 import { playSelect, playCorrect, playWrong, playVictory, playFireball, playWarning, preloadSounds } from '../services/soundService'
 import MarioCard from '../components/MarioCard.vue'
 import MarioDiv from '../components/MarioDiv.vue'
+import QuestionDisplay from '../components/QuestionDisplay.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -626,11 +619,6 @@ function getCorrectOptionText() {
   return sanitizeHtml(correctOption?.text || '')
 }
 
-// Soru metnini güvenli hale getir
-function getSafeQuestionText() {
-  return sanitizeHtml(gameStore.currentQuestion?.text || '')
-}
-
 // Seçenek metnini güvenli hale getir
 function getSafeOptionText(text) {
   return sanitizeHtml(text || '')
@@ -951,37 +939,6 @@ function getOptionIcon(index) {
   color: #ef4444;
 }
 
-/* Question Card - Simple Dark Mode Friendly */
-.question-card {
-  background: var(--bg-card);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 16px 20px;
-}
-
-/* Question Box */
-.question-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 80px;
-}
-
-.question-text {
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--text);
-  text-align: center;
-}
-
-.question-image {
-  max-width: 150px;
-  max-height: 80px;
-  border-radius: var(--radius-md);
-  margin-top: 10px;
-}
 
 /* Stats Row - Horizontal Badges */
 .stats-row {

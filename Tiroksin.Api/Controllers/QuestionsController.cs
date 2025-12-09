@@ -34,7 +34,6 @@ public class QuestionsController : ControllerBase
                 q.Id,
                 q.Text,
                 q.ImageUrl,
-                OptionsLayout = (int)q.OptionsLayout,
                 ExamType = (int)q.ExamType,
                 q.Category,
                 q.Subject,

@@ -29,7 +29,6 @@ public record QuestionDto
     public string Id { get; init; } = string.Empty;
     public string Text { get; init; } = string.Empty;
     public string? ImageUrl { get; init; }
-    public string OptionsLayout { get; init; } = string.Empty;
     public List<OptionDto> Options { get; init; } = new();
     public string? CorrectOptionId { get; init; }
 }

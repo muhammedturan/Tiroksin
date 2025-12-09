@@ -35,24 +35,6 @@
       </div>
     </MarioCard>
 
-    <!-- Your Stats Card (if not winner) -->
-    <MarioCard v-else-if="myResult" :color="myResult.rank <= 3 ? 'green' : 'blue'" class="my-stats-card">
-      <div class="my-stats-content">
-        <div class="my-stats-rank">
-          <span v-if="myResult.rank === 999">💀</span>
-          <span v-else>#{{ myResult.rank }}</span>
-        </div>
-        <div class="my-stats-info">
-          <div class="my-stats-title">Senin Sonucun</div>
-          <div class="my-stats-details">
-            <span class="stat-item">✅ {{ myResult.correctAnswers }} Doğru</span>
-            <span class="stat-item">❌ {{ myResult.wrongAnswers }} Yanlış</span>
-            <span class="stat-item">⭐ {{ myResult.score }} Puan</span>
-          </div>
-        </div>
-      </div>
-    </MarioCard>
-
     <!-- Full Leaderboard -->
     <div class="leaderboard-section">
       <div class="section-header">
@@ -94,14 +76,20 @@
               {{ result.username }}
               <span v-if="isMe(result.userId)" class="you-tag">SEN</span>
             </div>
-            <div class="item-stats">
-              <span class="mini-stat correct">✅ {{ result.correctAnswers }}</span>
-              <span class="mini-stat wrong">❌ {{ result.wrongAnswers }}</span>
-            </div>
           </div>
-          <div class="item-score">
-            <div class="score-value">{{ result.score }}</div>
-            <div class="score-label">puan</div>
+          <div class="item-badges">
+            <div class="stat-badge correct-badge">
+              <div class="badge-value">{{ result.correctAnswers }}</div>
+              <div class="badge-label">doğru</div>
+            </div>
+            <div class="stat-badge wrong-badge">
+              <div class="badge-value">{{ result.wrongAnswers }}</div>
+              <div class="badge-label">yanlış</div>
+            </div>
+            <div class="stat-badge score-badge">
+              <div class="badge-value">{{ result.score }}</div>
+              <div class="badge-label">puan</div>
+            </div>
           </div>
         </div>
       </div>
@@ -456,51 +444,6 @@ function isMe(playerId) {
 }
 
 /* ==========================================
-   MY STATS CARD
-   ========================================== */
-.my-stats-card {
-  margin-bottom: 20px;
-  position: relative;
-  z-index: 1;
-}
-
-.my-stats-content {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.my-stats-rank {
-  font-size: 1.8rem;
-  font-weight: 900;
-  min-width: 60px;
-  text-align: center;
-}
-
-.my-stats-info {
-  flex: 1;
-}
-
-.my-stats-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 4px;
-}
-
-.my-stats-details {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.stat-item {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-/* ==========================================
    LEADERBOARD SECTION
    ========================================== */
 .leaderboard-section {
@@ -669,41 +612,49 @@ function isMe(playerId) {
   box-shadow: 0 2px 0 #037bb5;
 }
 
-.item-stats {
+/* Item Badges - Correct/Wrong/Score */
+.item-badges {
   display: flex;
-  gap: 10px;
+  gap: 6px;
+  align-items: center;
 }
 
-.mini-stat {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.mini-stat.correct { color: #10b981; }
-.mini-stat.wrong { color: #ef4444; }
-
-.item-score {
+.stat-badge {
   text-align: center;
-  padding: 8px 14px;
-  background: linear-gradient(135deg, #10b981, #059669);
+  padding: 6px 10px;
   border-radius: var(--radius-md);
-  box-shadow: 0 3px 0 #047857;
+  min-width: 44px;
 }
 
-.score-value {
-  font-size: 1.1rem;
+.stat-badge .badge-value {
+  font-size: 0.95rem;
   font-weight: 800;
   color: white;
   line-height: 1;
 }
 
-.score-label {
-  font-size: 0.6rem;
+.stat-badge .badge-label {
+  font-size: 0.5rem;
   font-weight: 600;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255,255,255,0.85);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
+  margin-top: 2px;
+}
+
+.correct-badge {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 2px 0 #047857;
+}
+
+.wrong-badge {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 2px 0 #b91c1c;
+}
+
+.score-badge {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 2px 0 #b45309;
 }
 
 /* ==========================================
@@ -791,13 +742,28 @@ function isMe(playerId) {
    ========================================== */
 @media (max-width: 600px) {
   .leaderboard-item {
-    grid-template-columns: 40px 36px 1fr auto;
+    grid-template-columns: 36px 32px 1fr;
     gap: 8px;
     padding: 10px 12px;
   }
 
-  .item-stats {
-    display: none;
+  .item-badges {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+
+  .stat-badge {
+    padding: 4px 8px;
+    min-width: 38px;
+  }
+
+  .stat-badge .badge-value {
+    font-size: 0.85rem;
+  }
+
+  .stat-badge .badge-label {
+    font-size: 0.45rem;
   }
 
   .game-over-text {

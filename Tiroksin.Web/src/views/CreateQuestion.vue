@@ -35,89 +35,16 @@
           </div>
         </div>
 
-        <!-- Soru Alani -->
+        <!-- Soru ve Şıklar - QuestionEditor Component -->
         <div class="form-section">
-          <label class="section-label">Soru</label>
-          <div
-            class="question-box"
-            :class="{ 'question-box--filled': hasTextContent(form.text) }"
-            @click="openQuestionEditor"
-          >
-            <span class="question-number">1</span>
-            <div class="question-content">
-              <div v-if="hasTextContent(form.text)" v-html="form.text" class="question-text"></div>
-              <span v-else class="placeholder">Soruyu yazmak için tıklayın...</span>
-            </div>
-            <span class="edit-icon">✏️</span>
-          </div>
-        </div>
-
-        <!-- Layout Secici -->
-        <div class="form-section">
-          <label class="section-label">Şık Düzeni</label>
-          <div class="layout-buttons">
-            <MarioButton
-              :color="form.optionsLayout === 'Vertical' ? 'blue' : 'gray'"
-              size="sm"
-              @click="form.optionsLayout = 'Vertical'"
-            >
-              <template #icon>☰</template>
-              Dikey
-            </MarioButton>
-            <MarioButton
-              :color="form.optionsLayout === 'Grid' ? 'blue' : 'gray'"
-              size="sm"
-              @click="form.optionsLayout = 'Grid'"
-            >
-              <template #icon>⊞</template>
-              Grid
-            </MarioButton>
-            <MarioButton
-              :color="form.optionsLayout === 'Horizontal' ? 'blue' : 'gray'"
-              size="sm"
-              @click="form.optionsLayout = 'Horizontal'"
-            >
-              <template #icon>═</template>
-              Yatay
-            </MarioButton>
-          </div>
-        </div>
-
-        <!-- Secenekler -->
-        <div class="form-section">
-          <label class="section-label">Şıklar <span class="hint">(Doğru cevabı seçmek için harfe tıklayın)</span></label>
-          <div :class="getLayoutClass(form.optionsLayout)">
-            <div
-              v-for="(option, index) in form.options"
-              :key="index"
-              class="option-item"
-              :class="{
-                'option-item--correct': option.isCorrect,
-                'option-item--filled': hasTextContent(option.text),
-                'option-item--horizontal': form.optionsLayout === 'Horizontal'
-              }"
-              @click="form.optionsLayout === 'Horizontal' ? openOptionEditor(index) : null"
-            >
-              <button
-                type="button"
-                class="option-letter-btn"
-                :class="{ 'option-letter-btn--selected': option.isCorrect }"
-                @click.stop="setCorrectAnswer(index)"
-                :title="option.isCorrect ? 'Doğru cevap' : 'Doğru cevap olarak işaretle'"
-              >
-                {{ String.fromCharCode(65 + index) }}
-              </button>
-              <div v-if="form.optionsLayout !== 'Horizontal'" class="option-content" @click="openOptionEditor(index)">
-                <span v-if="hasTextContent(option.text)" v-html="option.text" class="option-text"></span>
-                <span v-else class="placeholder">Şık {{ String.fromCharCode(65 + index) }}...</span>
-              </div>
-              <button v-if="form.optionsLayout !== 'Horizontal'" class="edit-icon-btn" @click="openOptionEditor(index)" title="Düzenle">
-                ✏️
-              </button>
-              <!-- Horizontal mode: show fill status indicator -->
-              <span v-if="form.optionsLayout === 'Horizontal' && hasTextContent(option.text)" class="horizontal-fill-dot">●</span>
-            </div>
-          </div>
+          <label class="section-label">Soru ve Şıklar <span class="hint">(Doğru cevabı seçmek için harfe tıklayın)</span></label>
+          <QuestionEditor
+            :question-text="form.text"
+            :options="form.options"
+            @edit-question="openQuestionEditor"
+            @edit-option="openOptionEditor"
+            @set-correct="setCorrectAnswer"
+          />
         </div>
 
         <!-- Uyari -->
@@ -191,6 +118,7 @@ import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import MarioButton from '../components/MarioButton.vue'
 import MarioSelect from '../components/MarioSelect.vue'
 import MarioDiv from '../components/MarioDiv.vue'
+import QuestionEditor from '../components/QuestionEditor.vue'
 
 const router = useRouter()
 const loading = ref(false)
@@ -208,7 +136,6 @@ const form = ref({
   topic: '',
   examType: '',
   text: '',
-  optionsLayout: 'Vertical',
   options: [
     { text: '', isCorrect: false },
     { text: '', isCorrect: false },
@@ -265,17 +192,6 @@ const canSubmit = computed(() => {
   )
 })
 
-const getLayoutClass = (layout) => {
-  switch (layout) {
-    case 'Grid':
-      return 'options-grid options-grid--2col'
-    case 'Horizontal':
-      return 'options-grid options-grid--5col'
-    default:
-      return 'options-grid options-grid--1col'
-  }
-}
-
 const openQuestionEditor = () => {
   editorTitle.value = 'Soru Metni'
   editorType.value = 'question'
@@ -327,7 +243,6 @@ const handleSubmit = async () => {
       examType: form.value.examType,
       createdBy: currentUserId,
       text: form.value.text,
-      optionsLayout: form.value.optionsLayout,
       options: filledOptions
     })
 
@@ -385,218 +300,6 @@ const handleSubmit = async () => {
   color: var(--text-muted);
   text-transform: none;
   font-size: 0.75rem;
-}
-
-/* Question Box */
-.question-box {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 16px;
-  background: var(--bg-input);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.question-box:hover {
-  border-color: var(--mario-blue);
-  background: var(--bg-card-hover);
-}
-
-.question-box--filled {
-  border-color: var(--mario-green);
-}
-
-.question-box--filled:hover {
-  border-color: var(--mario-blue);
-}
-
-.question-number {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 40px;
-  height: 40px;
-  background: var(--mario-red);
-  color: white;
-  font-weight: 800;
-  font-size: 1.1rem;
-  border-radius: var(--radius-sm);
-  box-shadow: 0 3px 0 #a31b18;
-}
-
-.question-content {
-  flex: 1;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-}
-
-.question-text {
-  color: var(--text);
-  line-height: 1.5;
-}
-
-.placeholder {
-  color: var(--text-muted);
-}
-
-.edit-icon {
-  font-size: 1.2rem;
-  opacity: 0.5;
-  transition: opacity 0.15s;
-}
-
-.question-box:hover .edit-icon {
-  opacity: 1;
-}
-
-/* Layout Buttons */
-.layout-buttons {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-/* Options Grid */
-.options-grid {
-  display: grid;
-  gap: 12px;
-}
-
-.options-grid--1col {
-  grid-template-columns: 1fr;
-}
-
-.options-grid--2col {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.options-grid--5col {
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
-}
-
-/* Option Item */
-.option-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  background: var(--bg-input);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-md);
-  transition: all 0.15s ease;
-}
-
-.option-item:hover {
-  border-color: var(--mario-blue);
-  background: var(--bg-card-hover);
-}
-
-.option-item--filled {
-  border-color: var(--text-muted);
-}
-
-.option-item--correct {
-  border-color: var(--mario-green);
-  background: rgba(67, 176, 71, 0.08);
-}
-
-/* Option Letter Button */
-.option-letter-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 36px;
-  height: 36px;
-  background: var(--bg-card);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-weight: 800;
-  font-size: 0.95rem;
-  color: var(--text);
-}
-
-.option-letter-btn:hover {
-  border-color: var(--mario-green);
-  background: rgba(67, 176, 71, 0.1);
-  transform: scale(1.05);
-}
-
-.option-letter-btn--selected {
-  background: var(--mario-green);
-  border-color: var(--mario-green);
-  color: white;
-  box-shadow: 0 3px 0 #2d8a31;
-}
-
-.option-letter-btn--selected:hover {
-  background: var(--mario-green);
-}
-
-/* Option Content */
-.option-content {
-  flex: 1;
-  min-height: 36px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-.option-text {
-  color: var(--text);
-  line-height: 1.4;
-}
-
-/* Edit Icon Button */
-.edit-icon-btn {
-  background: none;
-  border: none;
-  font-size: 1rem;
-  cursor: pointer;
-  opacity: 0.4;
-  transition: opacity 0.15s;
-  padding: 4px;
-}
-
-.option-item:hover .edit-icon-btn {
-  opacity: 1;
-}
-
-/* Horizontal Mode - Compact cards */
-.option-item--horizontal {
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 16px 12px;
-  cursor: pointer;
-  min-height: 80px;
-  position: relative;
-}
-
-.option-item--horizontal .option-letter-btn {
-  min-width: 44px;
-  height: 44px;
-  font-size: 1.1rem;
-}
-
-.option-item--horizontal:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Fill indicator dot for horizontal mode */
-.horizontal-fill-dot {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  color: var(--mario-green);
-  font-size: 0.6rem;
 }
 
 /* Warning Box */
@@ -793,22 +496,6 @@ const handleSubmit = async () => {
 
   .category-grid {
     grid-template-columns: 1fr;
-  }
-
-  .options-grid--5col {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .options-grid--2col {
-    grid-template-columns: 1fr;
-  }
-
-  .layout-buttons {
-    width: 100%;
-  }
-
-  .layout-buttons > * {
-    flex: 1;
   }
 
   .form-actions {

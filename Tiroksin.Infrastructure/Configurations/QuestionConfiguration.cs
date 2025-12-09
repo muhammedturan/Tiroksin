@@ -21,11 +21,6 @@ public class QuestionConfiguration : IEntityTypeConfiguration<Question>
             .HasMaxLength(500)
             .HasColumnName("image_url");
 
-        builder.Property(q => q.OptionsLayout)
-            .IsRequired()
-            .HasColumnName("options_layout")
-            .HasConversion<int>();
-
         builder.Property(q => q.ExamType)
             .IsRequired()
             .HasColumnName("exam_type")

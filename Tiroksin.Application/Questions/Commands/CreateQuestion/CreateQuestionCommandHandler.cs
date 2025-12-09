@@ -23,7 +23,6 @@ public class CreateQuestionCommandHandler : IRequestHandler<CreateQuestionComman
             Text = command.Text,
             ExamType = command.ExamType,
             CreatedBy = command.CreatedBy,
-            OptionsLayout = command.OptionsLayout,
             Points = 0, // Dinamik hesaplanacak
             Category = command.Category,
             Subject = command.Subject,

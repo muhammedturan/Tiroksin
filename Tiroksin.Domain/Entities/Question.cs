@@ -8,7 +8,6 @@ public class Question : AuditEntity
     // Soru Bilgileri
     public string Text { get; set; } = string.Empty; // Soru metni
     public string? ImageUrl { get; set; } // Opsiyonel görsel
-    public OptionsLayout OptionsLayout { get; set; } = OptionsLayout.Vertical; // Şıkların düzeni
 
     // Kategorizasyon
     public ExamType ExamType { get; set; } // Sınav tipi (YKS-TYT, LGS, vb.)

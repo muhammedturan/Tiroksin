@@ -99,7 +99,6 @@ public class GetGameSessionQueryHandler : IRequestHandler<GetGameSessionQuery, G
             Id = q!.Id.ToString(),
             Text = q.Text,
             ImageUrl = q.ImageUrl,
-            OptionsLayout = q.OptionsLayout.ToString(),
             Options = q.Options
                 .OrderBy(o => o.OptionKey)
                 .Select(opt => new OptionDto

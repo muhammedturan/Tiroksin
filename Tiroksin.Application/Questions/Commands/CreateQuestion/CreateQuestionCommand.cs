@@ -9,7 +9,6 @@ public class CreateQuestionCommand : IRequest<Result<CreateQuestionResponse>>
     public string Text { get; set; } = string.Empty;
     public ExamType ExamType { get; set; }
     public Guid CreatedBy { get; set; }
-    public OptionsLayout OptionsLayout { get; set; } = OptionsLayout.Vertical;
     public List<QuestionOptionDto> Options { get; set; } = new List<QuestionOptionDto>();
 
     // Category parameters - stored directly on Question entity
