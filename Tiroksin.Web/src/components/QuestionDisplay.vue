@@ -2,6 +2,7 @@
   <div class="question-display">
     <!-- Question Text -->
     <div class="question-header">
+      <div class="question-block">?</div>
       <div class="question-text" v-html="safeQuestionText"></div>
     </div>
 
@@ -18,7 +19,6 @@
         :key="option.id"
         :class="[
           'option-item',
-          `option-item--${getOptionColor(index)}`,
           interactive ? 'option-interactive' : 'option-readonly',
           { selected: selectedOptionId === option.id }
         ]"
@@ -99,19 +99,44 @@ function handleOptionClick(optionId) {
   border: 2px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 20px;
+  box-shadow: 0 4px 0 var(--border);
 }
 
 /* Question Header */
 .question-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
   margin-bottom: 16px;
 }
 
+/* Mario Question Block */
+.question-block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 44px;
+  background: linear-gradient(180deg, #fbd000 0%, #e5a000 100%);
+  border: 3px solid #8b5a2b;
+  border-radius: 6px;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #8b5a2b;
+  text-shadow: 1px 1px 0 #fbd000;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.2),
+    0 3px 0 #8b5a2b;
+  flex-shrink: 0;
+}
+
 .question-text {
+  flex: 1;
   font-size: 1.1rem;
   font-weight: 600;
   line-height: 1.5;
   color: var(--text);
-  text-align: center;
 }
 
 /* Question Image */

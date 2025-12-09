@@ -624,16 +624,15 @@ function getSafeOptionText(text) {
   return sanitizeHtml(text || '')
 }
 
-// Kahoot-style option colors
+// Option colors (red, blue, yellow, green, purple)
 function getOptionColorClass(index) {
-  const colors = ['option-red', 'option-blue', 'option-yellow', 'option-green']
+  const colors = ['option-red', 'option-blue', 'option-yellow', 'option-green', 'option-purple']
   return colors[index % colors.length]
 }
 
-// Kahoot-style option icons
+// Option letters (A, B, C, D, E)
 function getOptionIcon(index) {
-  const icons = ['▲', '◆', '●', '■']
-  return icons[index % icons.length]
+  return String.fromCharCode(65 + index) // A, B, C, D, E
 }
 </script>
 
@@ -1012,13 +1011,6 @@ function getOptionIcon(index) {
   height: 100%;
 }
 
-/* Tek sayıda seçenek varsa son elemanı ortala */
-.options-grid-2x2 .kahoot-option:last-child:nth-child(odd) {
-  grid-column: 1 / -1;
-  width: calc(50% - 3px);
-  justify-self: center;
-}
-
 /* Option Buttons - SLIM */
 .kahoot-option {
   display: flex;
@@ -1039,7 +1031,8 @@ function getOptionIcon(index) {
 .kahoot-option.option-red,
 .kahoot-option.option-blue,
 .kahoot-option.option-yellow,
-.kahoot-option.option-green {
+.kahoot-option.option-green,
+.kahoot-option.option-purple {
   background: var(--bg-card);
   box-shadow: 0 3px 0 var(--border);
   color: var(--text);
@@ -1093,10 +1086,47 @@ function getOptionIcon(index) {
   opacity: 0.7;
 }
 
+/* Option Letter Circle */
 .option-shape {
-  font-size: 1.1rem;
-  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 0.9rem;
   flex-shrink: 0;
+  color: white;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.option-red .option-shape {
+  background: var(--mario-red, #e52521);
+}
+
+.option-blue .option-shape {
+  background: var(--mario-blue, #049cd8);
+}
+
+.option-yellow .option-shape {
+  background: var(--mario-yellow, #fbd000);
+  color: #333;
+}
+
+.option-green .option-shape {
+  background: var(--mario-green, #43b047);
+}
+
+.option-purple .option-shape {
+  background: #9b59b6;
+}
+
+/* 5. şık (tek sayıda seçenek) için ortalama */
+.options-grid-2x2 > button:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  width: calc(50% - 3px);
+  justify-self: center;
 }
 
 .option-content {
